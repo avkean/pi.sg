@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="An irrationally short URL." />
+    <meta name="theme-color" content="#ffffff" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="pi.sg" />
+    <meta property="og:description" content="An irrationally short URL." />
+    <meta property="og:url" content="https://pi.sg/" />
+    <title>pi.sg | an irrationally short URL.</title>
+    <link rel="canonical" href="https://pi.sg/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #fff;
+        --ink: #000;
+        --pi-face: "STIX Two Math", "STIX Two Text", "Iowan Old Style", Georgia, serif;
+        --copy-face: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-synthesis: none;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        min-height: 100%;
+        margin: 0;
+      }
+
+      body {
+        min-height: 100vh;
+        min-height: 100dvh;
+        overflow: hidden;
+        background: var(--paper);
+        color: var(--ink);
+      }
+
+      .page {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        display: grid;
+        width: max-content;
+        min-height: 0;
+        grid-template-columns: auto auto;
+        grid-template-rows: auto auto;
+        column-gap: clamp(4.75rem, 6vw, 7rem);
+        align-items: baseline;
+        overflow: visible;
+        transform: translate(-50%, -50%);
+      }
+
+      .pi,
+      .tagline {
+        margin: 0;
+      }
+
+      .pi {
+        grid-row: 1 / span 2;
+        font-family: var(--pi-face);
+        font-size: clamp(17rem, 54dvh, 31.5rem);
+        font-weight: 400;
+        line-height: 0.7;
+        letter-spacing: -0.055em;
+      }
+
+      .tagline,
+      .signature {
+        font-family: var(--copy-face);
+        font-weight: 400;
+      }
+
+      .tagline {
+        align-self: end;
+        padding-bottom: 0.35rem;
+        font-size: clamp(1.6rem, 3vw, 3.1rem);
+        line-height: 1.08;
+        letter-spacing: -0.015em;
+        white-space: nowrap;
+      }
+
+      .signature {
+        display: flex;
+        min-width: 44px;
+        min-height: 44px;
+        align-items: center;
+        align-self: start;
+        justify-self: start;
+        color: inherit;
+        font-size: 0.9375rem;
+        line-height: 1;
+        text-decoration: none;
+      }
+
+      .signature:focus-visible {
+        outline: 2px solid currentColor;
+        outline-offset: 4px;
+      }
+
+      @media (max-width: 700px) {
+        .page {
+          position: relative;
+          top: auto;
+          left: auto;
+          display: block;
+          width: 100%;
+          min-height: 100vh;
+          min-height: 100dvh;
+          overflow: hidden;
+          transform: none;
+        }
+
+        .pi,
+        .tagline,
+        .signature {
+          position: absolute;
+        }
+
+        .pi {
+          top: 47%;
+          right: 0.12em;
+          grid-row: auto;
+          font-size: clamp(18rem, 50dvh, 25rem);
+          transform: translateY(-50%);
+        }
+
+        .tagline {
+          top: 8%;
+          left: max(1.5rem, env(safe-area-inset-left, 0px));
+          max-width: 12ch;
+          padding: 0;
+          font-size: clamp(1.4rem, 6.4vw, 1.7rem);
+          line-height: 1.08;
+          white-space: normal;
+        }
+
+        .signature {
+          bottom: max(10dvh, env(safe-area-inset-bottom, 0px));
+          left: max(1.5rem, env(safe-area-inset-left, 0px));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page" aria-labelledby="mark tagline">
+      <h1 class="pi" id="mark" aria-label="Pi">π</h1>
+      <p class="tagline" id="tagline">an irrationally short URL.</p>
+      <a
+        class="signature"
+        href="https://avkean.com/"
+        aria-label="Visit avkean"
+      >by avkean ↗</a>
+    </main>
+  </body>
+</html>

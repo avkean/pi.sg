@@ -1,0 +1,18 @@
+{
+	admin off
+	auto_https off
+}
+
+:8080 {
+	root * /srv
+	encode zstd gzip
+
+	@document path / /index.html
+	header @document Cache-Control "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400"
+
+	@favicon path /favicon.svg
+	header @favicon Cache-Control "public, max-age=86400, immutable"
+
+	header -Server
+	file_server
+}
