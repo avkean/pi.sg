@@ -1,0 +1,7 @@
+archive/
+node_modules/
+dist/
+models/
+codecs/grammar/models/
+codecs/core/subword/model.mjs
+test/fixtures/

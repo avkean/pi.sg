@@ -3,159 +3,160 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="An irrationally short URL." />
-    <meta name="theme-color" content="#ffffff" />
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="pi.sg" />
-    <meta property="og:description" content="An irrationally short URL." />
-    <meta property="og:url" content="https://pi.sg/" />
-    <title>pi.sg | an irrationally short URL.</title>
-    <link rel="canonical" href="https://pi.sg/" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="A cool link compressor that doesn't store your links."
+    />
+    <meta name="referrer" content="no-referrer" />
+    <title>pi.sg</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <style>
-      :root {
-        color-scheme: light;
-        --paper: #fff;
-        --ink: #000;
-        --pi-face: "STIX Two Math", "STIX Two Text", "Iowan Old Style", Georgia, serif;
-        --copy-face: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        font-synthesis: none;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      html,
-      body {
-        width: 100%;
-        min-height: 100%;
-        margin: 0;
-      }
-
-      body {
-        min-height: 100vh;
-        min-height: 100dvh;
-        overflow: hidden;
-        background: var(--paper);
-        color: var(--ink);
-      }
-
-      .page {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        display: grid;
-        width: max-content;
-        min-height: 0;
-        grid-template-columns: auto auto;
-        grid-template-rows: auto auto;
-        column-gap: clamp(4.75rem, 6vw, 7rem);
-        align-items: baseline;
-        overflow: visible;
-        transform: translate(-50%, -50%);
-      }
-
-      .pi,
-      .tagline {
-        margin: 0;
-      }
-
-      .pi {
-        grid-row: 1 / span 2;
-        font-family: var(--pi-face);
-        font-size: clamp(17rem, 54dvh, 31.5rem);
-        font-weight: 400;
-        line-height: 0.7;
-        letter-spacing: -0.055em;
-      }
-
-      .tagline,
-      .signature {
-        font-family: var(--copy-face);
-        font-weight: 400;
-      }
-
-      .tagline {
-        align-self: end;
-        padding-bottom: 0.35rem;
-        font-size: clamp(1.6rem, 3vw, 3.1rem);
-        line-height: 1.08;
-        letter-spacing: -0.015em;
-        white-space: nowrap;
-      }
-
-      .signature {
-        display: flex;
-        min-width: 44px;
-        min-height: 44px;
-        align-items: center;
-        align-self: start;
-        justify-self: start;
-        color: inherit;
-        font-size: 0.9375rem;
-        line-height: 1;
-        text-decoration: none;
-      }
-
-      .signature:focus-visible {
-        outline: 2px solid currentColor;
-        outline-offset: 4px;
-      }
-
-      @media (max-width: 700px) {
-        .page {
-          position: relative;
-          top: auto;
-          left: auto;
-          display: block;
-          width: 100%;
-          min-height: 100vh;
-          min-height: 100dvh;
-          overflow: hidden;
-          transform: none;
-        }
-
-        .pi,
-        .tagline,
-        .signature {
-          position: absolute;
-        }
-
-        .pi {
-          top: 47%;
-          right: 0.12em;
-          grid-row: auto;
-          font-size: clamp(18rem, 50dvh, 25rem);
-          transform: translateY(-50%);
-        }
-
-        .tagline {
-          top: 8%;
-          left: max(1.5rem, env(safe-area-inset-left, 0px));
-          max-width: 12ch;
-          padding: 0;
-          font-size: clamp(1.4rem, 6.4vw, 1.7rem);
-          line-height: 1.08;
-          white-space: normal;
-        }
-
-        .signature {
-          bottom: max(10dvh, env(safe-area-inset-bottom, 0px));
-          left: max(1.5rem, env(safe-area-inset-left, 0px));
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="/assets/style.css" />
+    <script type="module" src="/assets/app.js"></script>
   </head>
   <body>
-    <main class="page" aria-labelledby="mark tagline">
-      <h1 class="pi" id="mark" aria-label="Pi">π</h1>
-      <p class="tagline" id="tagline">an irrationally short URL.</p>
-      <a
-        class="signature"
-        href="https://avkean.com/"
-        aria-label="Visit avkean"
-      >by avkean ↗</a>
+    <main>
+      <header>
+        <h1>pi.sg</h1>
+        <p>a cool link compressor that doesn't store your links.</p>
+      </header>
+
+      <form id="compress-form" novalidate>
+        <div class="field-heading">
+          <label for="input">Your link</label>
+          <button class="text-button" type="button" id="clear" disabled>
+            Clear
+          </button>
+        </div>
+        <textarea
+          id="input"
+          rows="3"
+          inputmode="url"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          placeholder="https://example.com/something-long"
+          aria-describedby="input-error"
+        ></textarea>
+        <p id="input-error" class="error" role="alert" hidden></p>
+
+        <fieldset class="format-switch">
+          <legend>Link format</legend>
+          <label class="format-option"
+            ><input
+              type="radio"
+              name="format"
+              id="unicode"
+              value="compact"
+              checked
+            />
+            Unicode</label
+          >
+          <label class="format-option"
+            ><input type="radio" name="format" id="plain" value="ascii" />
+            ASCII</label
+          >
+        </fieldset>
+
+        <div class="field-heading output-heading">
+          <label for="output" id="output-label">Compressed link</label>
+          <a id="open" target="_blank" rel="noopener noreferrer" hidden
+            >Open link</a
+          >
+        </div>
+        <textarea
+          id="output"
+          rows="3"
+          readonly
+          spellcheck="false"
+          placeholder="Your link will appear here."
+          aria-describedby="stats"
+        ></textarea>
+
+        <div class="result-row">
+          <p id="stats" class="status" role="status" aria-live="polite">
+            Paste a link to get started.
+          </p>
+          <button class="copy-button" type="button" id="copy" disabled>
+            Copy link
+          </button>
+        </div>
+        <p
+          id="copy-status"
+          class="sr-only"
+          role="status"
+          aria-live="polite"
+        ></p>
+        <p class="extra-option">
+          <label class="format-option"
+            ><input type="checkbox" id="extra" checked /> Extra compression
+            (uses this server)</label
+          >
+        </p>
+        <p class="confirmation-option">
+          <label class="format-option"
+            ><input type="checkbox" id="confirmation" checked /> Show
+            destination first</label
+          >
+        </p>
+      </form>
+
+      <details>
+        <summary>How does this work?</summary>
+        <p>
+          Pi compresses your link, just like a zip file compresses files. When
+          someone opens it, Pi unpacks it to get the original address.
+        </p>
+        <p>
+          Extra compression uses the server's computing power to try making it
+          even smaller. Your link isn't saved. Turn it off to keep everything in
+          your browser.
+        </p>
+        <p>It's not encryption. Anyone with the link can unpack it.</p>
+        <p>
+          “Show destination first” lets you see the address before opening it.
+          You can also add ~ to the end of any Pi link to do this. It doesn't
+          check whether the site is safe.
+        </p>
+        <p class="credits">
+          Domain data adapted from
+          <a
+            href="https://majestic.com/reports/majestic-million"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Majestic Million</a
+          >
+          by Majestic 12 (<a
+            href="https://creativecommons.org/licenses/by/3.0/"
+            target="_blank"
+            rel="noopener noreferrer"
+            >CC BY 3.0</a
+          >).
+        </p>
+      </details>
+
+      <footer class="maker">
+        <picture class="brand">
+          <source
+            media="(prefers-color-scheme: dark)"
+            srcset="/avkean_light.svg"
+          />
+          <img
+            src="/avkean_dark.svg"
+            alt="Avkean Systems"
+            width="224"
+            height="59"
+          />
+        </picture>
+      </footer>
+
+      <noscript
+        ><p>
+          JavaScript is needed to compress a link. Existing Pi links still
+          redirect without it.
+        </p></noscript
+      >
     </main>
   </body>
 </html>

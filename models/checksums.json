@@ -1,0 +1,8 @@
+{
+  "models/context-v1.bin": "638cc9cd45c041621bbf65fc08356546dcba80b88b99498f7cb93bd698087456",
+  "codecs/core/subword/model.mjs": "b3c6f2d685960e45be121a14cf7a0feb41d028ea6c163b1ef72221f12595ce80",
+  "codecs/grammar/models/majestic-262144-meta.json": "fd4dd126d2f1318f23a4b01c008616973fa05b8b2db2d6669199f5c3c7dc5ba7",
+  "codecs/grammar/models/majestic-262144-pool.bin": "c53fd2a43fd938982c514e23ca5bcd2d8d346b9eb57c42b3f46b2283e520fb48",
+  "codecs/grammar/models/skeleton-o6-c65536-hosts-meta.json": "39203f1d7d33f794f1e9a512c0a42813606f04bfe54b81e1d47ea753326c23ae",
+  "codecs/grammar/models/skeleton-o6-c65536-hosts.bin": "26b9f67e958efe751449abe73b6e1f6c1ff185b18d58a74ffb2e12b6a28d3afb"
+}

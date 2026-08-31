@@ -1,15 +1,24 @@
-FROM caddy:2-alpine
+FROM node:26.8.1-bookworm-slim AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY build.mjs ./
+COPY src/ src/
+COPY codecs/ codecs/
+COPY models/ models/
+RUN npm run build && npm prune --omit=dev
 
-RUN setcap -r /usr/bin/caddy
-RUN addgroup -S -g 10001 caddy && adduser -S -D -H -u 10001 -G caddy caddy
-
-ENV XDG_CONFIG_HOME=/tmp/caddy-config \
-    XDG_DATA_HOME=/tmp/caddy-data
-
-COPY --chown=caddy:caddy Caddyfile /etc/caddy/Caddyfile
-COPY --chown=caddy:caddy public/ /srv/
-
-USER caddy
-EXPOSE 8080
-
-HEALTHCHECK --interval=30s --timeout=3s --start-period=3s --retries=3 CMD wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1
+FROM node:26.8.1-bookworm-slim
+ENV NODE_ENV=production PI_APP_HOST=0.0.0.0
+WORKDIR /app
+COPY --from=build /app/node_modules/ node_modules/
+COPY --from=build /app/dist/ dist/
+COPY src/ src/
+COPY codecs/ codecs/
+COPY models/ models/
+COPY public/ public/
+COPY licenses/ licenses/
+COPY server.mjs package.json NOTICE.md ./
+USER node
+EXPOSE 8788
+CMD ["node", "server.mjs"]

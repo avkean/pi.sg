@@ -1,18 +1,11 @@
 {
-	admin off
-	auto_https off
+	# Even an encoded request path contains someone's destination.
+	log default {
+		exclude http.log.access http.log.error
+	}
 }
 
-:8080 {
-	root * /srv
-	encode zstd gzip
-
-	@document path / /index.html
-	header @document Cache-Control "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400"
-
-	@favicon path /favicon.svg
-	header @favicon Cache-Control "public, max-age=86400, immutable"
-
-	header -Server
-	file_server
+{$PI_APP_DOMAIN:pi.sg} {
+	header Strict-Transport-Security "max-age=31536000"
+	reverse_proxy app:8788
 }

@@ -1,0 +1,53 @@
+{
+  "note": "Frozen before fresh test. All markers explicitly exercised; do not regenerate after release to mask a wire change.",
+  "rows": [
+    {
+      "input": "https://github.com/example/project/issues/12345",
+      "payload": "PmOjjLj0ScCCgf9Edc2A"
+    },
+    {
+      "input": "https://github.com/example/project/issues/12345",
+      "payload": "SmOjjLkX5-Bj5GCKVOA"
+    },
+    {
+      "input": "https://github.com/example/project/issues/12345",
+      "payload": "DmOjjLssoKSkottLXT88syShN0kvOz9VPrUjMLchJ1S8oys9KTS7RzywuLk0t1jc0MjYxBQA"
+    },
+    {
+      "input": "https://github.com/example/project/issues/12345",
+      "payload": "LmOjjLl5odHRwczovL2dpdGh1Yi5jb20vZXhhbXBsZS9wcm9qZWN0L2lzc3Vlcy8xMjM0NQ"
+    },
+    {
+      "input": "HTTPS://EXAMPLE.COM:443/A?b=%2F&b=%2f#🍕",
+      "payload": "PpGUwLP_z97fgLcZ_dZU_wU7l6Dft1u2G9jrl2Y3Gv6ZyoMceZ8GjzqqELZ56d6rzkA"
+    },
+    {
+      "input": "HTTPS://EXAMPLE.COM:443/A?b=%2F&b=%2f#🍕",
+      "payload": "SpGUwLAmELw2NKKcN9ltHz-bSJMYK2a9k3i307DQWJXebNHDOSwfyCih6vaDShZRDavznCNh4bPYtAA"
+    },
+    {
+      "input": "HTTPS://EXAMPLE.COM:443/A?b=%2F&b=%2f#🍕",
+      "payload": "DpGUwLPMICQkIttLXd41w9A3wcdVz9ve1MjEx1ne0T7JVNXJTA5Fpyh_m904FAA"
+    },
+    {
+      "input": "HTTPS://EXAMPLE.COM:443/A?b=%2F&b=%2f#🍕",
+      "payload": "LpGUwLEBIVFRQUzovL0VYQU1QTEUuQ09NOjQ0My9BP2I9JTJGJgEGDGYj8J-NlQ"
+    },
+    {
+      "input": "https://example.com/?q=repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-",
+      "payload": "P4hkEQzCxSSIklqmbvogsYa513gBEiK03bWPc3VekXhVgpBQudShGRL9gea3bKLLscGKEL1xymGsmSAWhoFPy42ntZO8fwtb3ik-bd6T7inSznJFVAUzmU6MuEvEbHJjw-sNSlhS6UjKwmxSXtZmdFXEV8o6KM2dHNAz5kse-IGYL7XeLzfHz134feAcKymbNvk9K-j0H5E1-Txmb1Bh96bk2EtHV4iVOH8WFbolfTn5mEPabDV6j17Oif04-1sZsDX9af9iSSxD-JCnWtVkO33uoRsK2F7W_c1okmigC9lQ6B4OfHi4Aj87DRhLUEJ_rOb09KiLwjc2x_CGHXX63yZhUevoju4LoH8G6ayFkNnDJIgLEGG2bCWXLfYjFDjK-iizecRZhsnIXAp8D7uSUusaMB2ZIyAMjJ2xHJpuBpGKbGWuP1v3Av9fTm5bSJBA"
+    },
+    {
+      "input": "https://example.com/?q=repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-",
+      "payload": "S4hkEQyVNKGNjdAEIqxAtzGsl0sx2cKlb-9gTkAVyhZ4OM0D8pxBR_asmbisREfDAN61TNhMqri67qBHmOINp1qXuusb60wTy5CHlybyuKlgvHMWFiyahrBdGCMKpzHxlh7sgYmZw9MfN6L74nwxIyJDmSp3Bog2h_SLt-vU7XR_I9xGc1E-mJqWVRymGHoEt5AjmGuhRhf_0RUgSG2TgLH0_P2MqiXTwBi-Om5uBf9dY_363ofnE7j9cYZECPB2pAgEPuR9mpWOFgkTq9dqQ7gZIJ4VjIfPIZiw3Wubk7F-u8_2aW7_9io1c5d8GOHQ1WQ6TMjJuWi4P9Wou68rXjb8DsC7EAgpzRyUhIJwFmqnWauC8UKV0GzuLJRqi_rahWFHWkT90jSebQCkUPIc3atTGpF6CwuYZUJ31Y5_XoaksonoF97jwtgi3gOu4tBb0my5asLWbAmZ3mrpjXrwBFp4-uKlkhDWepAnHaAgElC2Vxis_qAHZEGFUsKoOiKMbtJMczaWkhZ4vijntpo7F52nd653g"
+    },
+    {
+      "input": "https://example.com/?q=repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-",
+      "payload": "D4hkEQ8soKSkottLXT61IzC3ISdVLzs_Vty-0LUotSE0s0R2lRqkhRwEA"
+    },
+    {
+      "input": "https://example.com/?q=repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-repeat-",
+      "payload": "L4hkEQzxodHRwczovL2V4YW1wbGUuY29tLz9xPXJlcGVhdC3jCgc"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+services:
+  app:
+    build: .
+    environment:
+      PI_APP_ORIGIN: https://${PI_APP_DOMAIN:-pi.sg}
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    # Keep CPU throttling pauses shorter than the worker deadlines.
+    cpu_period: 10000
+    cpu_quota: 10000
+    pids_limit: 64
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - --input-type=module
+        - -e
+        - "const r = await fetch('http://127.0.0.1:8788/health'); if (!r.ok) process.exit(1);"
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  caddy:
+    image: caddy:2.11.4-alpine
+    environment:
+      PI_APP_DOMAIN: ${PI_APP_DOMAIN:-pi.sg}
+    restart: unless-stopped
+    mem_limit: 128m
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  caddy_data:
+  caddy_config:

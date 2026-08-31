@@ -1,5 +1,7 @@
+node_modules/
+dist/
+archive/
 .DS_Store
-.impeccable/
-docs/
-infra/
-PRODUCT.md
+*.log
+.env
+.env.*

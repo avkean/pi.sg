@@ -1,0 +1,11 @@
+services:
+  app:
+    image: pi-compressor:${PI_RELEASE:-latest}
+    networks:
+      proxy:
+        aliases: [pi-compressor]
+
+networks:
+  proxy:
+    external: true
+    name: proxy_net

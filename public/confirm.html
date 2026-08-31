@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Continue | pi.sg</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/assets/style.css" />
+  </head>
+  <body>
+    <main class="confirmation-page">
+      <picture class="brand">
+        <source
+          media="(prefers-color-scheme: dark)"
+          srcset="/avkean_light.svg"
+        />
+        <img
+          src="/avkean_dark.svg"
+          alt="Avkean Systems"
+          width="320"
+          height="84"
+        />
+      </picture>
+      <h1>Open this link?</h1>
+      <p
+        class="destination-url"
+        dir="ltr"
+        tabindex="0"
+        aria-label="Full destination address"
+      >
+        <span>{{prefix}}</span><strong dir="ltr">{{host}}</strong
+        ><span>{{suffix}}</span>
+      </p>
+      <div class="confirmation-actions">
+        <a class="copy-button" href="{{url}}" rel="noreferrer noopener"
+          >Continue →</a
+        >
+        <a class="confirmation-back" href="/">Cancel</a>
+      </div>
+    </main>
+  </body>
+</html>
