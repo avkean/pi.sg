@@ -1,6 +1,7 @@
 import { Worker } from 'node:worker_threads';
 import { performance } from 'node:perf_hooks';
 import { validate } from '../codecs/core/core.mjs';
+import { shareContext } from '../codecs/predict/models.mjs';
 export const MAX_SERVER_INPUT_BYTES = 32 * 1024;
 
 export class CompressionError extends Error {
@@ -98,6 +99,7 @@ export async function createCompressionPool({
     try {
       worker = new Worker(workerURL, {
         execArgv: [],
+        workerData: { sharedContext: shareContext() },
         resourceLimits: {
           maxOldGenerationSizeMb: 112,
           maxYoungGenerationSizeMb: 16,

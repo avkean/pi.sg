@@ -13,7 +13,7 @@ Pi doesn't visit destinations or log submitted URLs. This isn't encryption: anyo
 
 ## Run locally
 
-Use Node 26.5 or newer. The container pins Node 26.8.1.
+Use Node 26.5 or newer and a C++17 compiler. The container includes the build tools and pins Node 26.8.1. On macOS, install the Xcode command line tools; on Debian or Ubuntu, install `g++`. The build also needs Node's headers. If they aren't beside your Node installation, set `PI_NODE_HEADERS` to the directory containing `node_api.h`.
 
 ```sh
 npm ci
@@ -21,6 +21,8 @@ npm start
 ```
 
 Open [localhost:8788](http://127.0.0.1:8788). Restart after changing server files or static assets.
+
+The extra pass uses fixed word and URL models to pack common patterns more tightly. Its models stay on the server, so they don't add to the browser download. The small neural predictor runs on the CPU with a time limit, without any external service. Turn off extra compression to use only the browser codecs.
 
 ## Deploy
 
@@ -32,6 +34,8 @@ The included Docker Compose setup runs Pi behind Caddy with HTTPS. Pi runs as a 
 4. Check `/health`, copy and open both link formats, and check previews on a phone. Test long Unicode links through the actual proxy before opening the site to traffic.
 
 Keep the previous image for rollback. Back up the Caddy certificate volume and keep every codec and model when updating; old links depend on them.
+
+Once `n/o` links have been shared, don't roll back to an image without their decoders. Set `PI_PREDICTION_ENCODE=0` and recreate the app to stop the new encoding pass while keeping those links working.
 
 With an existing proxy on `proxy_net`, start only the app:
 

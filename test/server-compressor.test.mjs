@@ -21,6 +21,20 @@ const inputs = [
   'https://example.com/#' + 'pi'.repeat(16000)
 ];
 
+test('disabling prediction keeps new links readable without issuing more of them', async () => {
+  const fallback = createCompressor(model, { prediction: false });
+  const fixtures = JSON.parse(
+    await readFile(new URL('fixtures/predict-links.json', import.meta.url))
+  );
+  for (const frame of fixtures[0].frames)
+    assert.equal(fallback.decode(frame), fixtures[0].input);
+  assert.ok(
+    fallback
+      .encodeAdditional(inputs[1])
+      .every((candidate) => !['n', 'o'].includes(candidate.payload[0]))
+  );
+});
+
 test('server candidates preserve old links and never increase the chosen link length', () => {
   for (const input of inputs)
     for (const format of ['compact', 'ascii']) {
@@ -58,9 +72,12 @@ test('every additional codec and both transports redirect through the actual HTT
       }
     assert.ok(seen.has('unicode-v1'));
     assert.ok(seen.has('url-grammar-v1'));
+    assert.ok(seen.has('statistical-v1') || seen.has('neural-v1'));
     for (const path of [
       '/codecs/grammar/models/majestic-262144-pool.bin',
       '/src/compression-worker.mjs',
+      '/models/predict-v1/context.bin',
+      '/dist/neural.node',
       '/archive/before-cleanup/transcript.md'
     ]) {
       const response = await fetch(app.origin + path, { redirect: 'manual' });

@@ -1,6 +1,7 @@
 import { Worker } from 'node:worker_threads';
 import { performance } from 'node:perf_hooks';
 import { isNativeFrame } from './native-frame.mjs';
+import { shareContext } from '../codecs/predict/models.mjs';
 
 export class RedirectError extends Error {
   constructor(code) {
@@ -97,6 +98,7 @@ export async function createRedirectPool({
     try {
       worker = new Worker(workerURL, {
         execArgv: [],
+        workerData: { sharedContext: shareContext() },
         resourceLimits: {
           maxOldGenerationSizeMb: 112,
           maxYoungGenerationSizeMb: 16,

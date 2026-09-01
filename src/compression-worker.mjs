@@ -1,8 +1,9 @@
 import { readFile } from 'node:fs/promises';
-import { parentPort } from 'node:worker_threads';
+import { parentPort, workerData } from 'node:worker_threads';
 import { createCompressor } from './server-compressor.mjs';
 const compressor = createCompressor(
-  await readFile(new URL('../models/context-v1.bin', import.meta.url))
+  await readFile(new URL('../models/context-v1.bin', import.meta.url)),
+  { ...workerData, prediction: process.env.PI_PREDICTION_ENCODE !== '0' }
 );
 compressor.warmup();
 parentPort.on('message', ({ id, input }) => {

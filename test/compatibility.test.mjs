@@ -4,14 +4,16 @@ import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { createCompressor } from '../src/server-compressor.mjs';
 
-test('saved links still decode and compression produces the same bytes', async () => {
+test('saved links still decode and new results never grow', async () => {
   const read = (name) => readFile(new URL(name, import.meta.url));
   const compressor = createCompressor(await read('../models/context-v1.bin'));
   const fixtures = JSON.parse(await read('./fixtures/links.json'));
   for (const { input, ascii, compact } of fixtures) {
     for (const [format, payload] of Object.entries({ ascii, compact })) {
       assert.equal(compressor.decode(payload), input);
-      assert.equal(compressor.encode(input, { format }).payload, payload);
+      const result = compressor.encode(input, { format });
+      assert.ok(result.payload.length <= payload.length);
+      assert.equal(compressor.decode(result.payload), input);
       const path = new URL('https://pi.sg/' + payload).pathname.slice(1);
       assert.equal(compressor.decode(path), input);
     }

@@ -9,6 +9,7 @@ Deploy one Pi process behind HTTPS first. Keep the node port private, use the su
 - Test a burst of requests within the container limits. Check aggregate CPU, memory, latency, 429s, and 503s. Worker heap limits do not include native allocations.
 - Keep proxy and hosting logs free of request paths, bodies, and referrers. Encoded paths still contain the destination.
 - Tag each release image before replacing it. Keep the previous image for rollback and preserve codec/model files indefinitely.
+- For a compression rollback, set `PI_PREDICTION_ENCODE=0` and recreate the app. This keeps the `n/o` decoders while using the previous encoders. An older image without those decoders would break newly shared links.
 
 ## Bot protection
 

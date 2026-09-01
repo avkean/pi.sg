@@ -4,5 +4,9 @@
   "codecs/grammar/models/majestic-262144-meta.json": "fd4dd126d2f1318f23a4b01c008616973fa05b8b2db2d6669199f5c3c7dc5ba7",
   "codecs/grammar/models/majestic-262144-pool.bin": "c53fd2a43fd938982c514e23ca5bcd2d8d346b9eb57c42b3f46b2283e520fb48",
   "codecs/grammar/models/skeleton-o6-c65536-hosts-meta.json": "39203f1d7d33f794f1e9a512c0a42813606f04bfe54b81e1d47ea753326c23ae",
-  "codecs/grammar/models/skeleton-o6-c65536-hosts.bin": "26b9f67e958efe751449abe73b6e1f6c1ff185b18d58a74ffb2e12b6a28d3afb"
+  "codecs/grammar/models/skeleton-o6-c65536-hosts.bin": "26b9f67e958efe751449abe73b6e1f6c1ff185b18d58a74ffb2e12b6a28d3afb",
+  "models/predict-v1/context.bin": "eeea8f104fa23f318aa1f1ab4a6aff70a27111ed71c19685ba285cf05085df22",
+  "models/predict-v1/neural.bin": "68803a10f888b12e220ede5415b79b529ef6dd81c4b4df3e30e44e9516cc2515",
+  "models/predict-v1/words.tsv": "dd8c27720a2e8b289ef0543e0c279b30ae7fd01e5db7adc1fbaebecf509df87c",
+  "models/predict-v1/bigrams.bin": "6cce19d6ef3316d43dc43ee08510fa1f986c57f62b988ac2437fab9b19448ae3"
 }

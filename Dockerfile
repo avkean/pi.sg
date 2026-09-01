@@ -1,4 +1,5 @@
 FROM node:26.8.1-bookworm-slim AS build
+RUN apt-get update && apt-get install -y --no-install-recommends g++ && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
@@ -21,4 +22,4 @@ COPY licenses/ licenses/
 COPY server.mjs package.json NOTICE.md ./
 USER node
 EXPOSE 8788
-CMD ["node", "server.mjs"]
+CMD ["node", "--v8-pool-size=1", "server.mjs"]
