@@ -21,22 +21,41 @@ Some links may still get longer. Pi always shows the real difference before you 
 
 ## How Pi works
 
+Pi doesn't rely on one compressor. It tries several different models and keeps the one that makes the shortest link.
+
 ```mermaid
-flowchart LR
-    A[Paste a URL] --> B[Your browser tries several methods]
-    B --> C{Extra compression?}
-    C -->|Off| E[Check the results]
-    C -->|On| D[The server tries more methods]
-    D --> E
-    E --> F[Keep the shortest result]
-    F --> G[Copy and share]
-    G --> H[Unpack the original URL]
-    H --> I[Show the destination or redirect]
+flowchart TD
+    A[Original URL] --> B[Try several compression models]
+
+    B --> C[URL structure model]
+    B --> D[General text compression]
+    B --> E[Prediction models]
+
+    C --> C1[Common domains, paths, queries, IDs and numbers]
+    D --> D1[Subwords, repeated text, LZ, DEFLATE and Brotli]
+    E --> E1[Byte context, word pairs and a small neural model]
+
+    C1 --> F[Pack each result into compact bits]
+    D1 --> F
+    E1 --> F
+
+    F --> G[Add a damage check]
+    G --> H[Use the selected ASCII or Unicode format]
+    H --> I[Unpack each result and check it matches exactly]
+    I --> J[Keep the shortest link]
+
+    J --> K[When opened, the format marker selects the right decoder]
+    K --> L[Rebuild the original URL]
+    L --> M[Show the destination or redirect]
 ```
 
-Pi looks for familiar patterns in the domain, path, query, words, and numbers. It tries several ways to compress them, checks that each result turns back into the exact same URL, then keeps the shortest one.
+The URL structure model knows that links usually contain a scheme, domain, path, query, and fragment. Common domains and URL patterns can be stored as small numbers instead of being written out in full.
 
-The compressed data and a small damage check are placed inside the Pi link. When someone opens it, Pi reads that data, rebuilds the original URL, and either redirects there or shows the destination first.
+The prediction models work a bit like autocomplete. One looks at the previous bytes and common word pairs. Another small neural model looks at up to 48 previous bytes. When a character is easy to predict, arithmetic coding can store it using less space.
+
+These models are fixed files that come with Pi. They don't learn from submitted links. Extra compression runs the larger models on the server, while the browser handles the lighter methods itself.
+
+Before Pi uses a result, it unpacks it again. If it doesn't produce the exact original URL, including its spelling, escaping, query order, and fragment, Pi rejects it. The shortest valid result becomes the final link.
 
 ## Run Pi
 
