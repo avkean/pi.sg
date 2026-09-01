@@ -51,7 +51,7 @@ test('server candidates preserve old links and never increase the chosen link le
   assert.equal(current.encode(inputs[0]).payload.length, 17);
 });
 
-test('every additional codec and both transports redirect through the actual HTTP worker', async () => {
+test('every additional codec and both transports preview through the actual HTTP worker', async () => {
   const app = await serve({ port: 0 });
   try {
     const seen = new Set();
@@ -64,10 +64,13 @@ test('every additional codec and both transports redirect through the actual HTT
             format
           });
           const response = await fetch(result.url, { redirect: 'manual' });
-          assert.equal(response.status, 302);
-          assert.equal(response.headers.get('location'), new URL(input).href);
+          assert.equal(response.status, 200);
+          assert.equal(response.headers.get('location'), null);
           assert.equal(response.headers.get('cache-control'), 'no-store');
-          await response.arrayBuffer();
+          const page = await response.text();
+          assert.ok(
+            page.includes(`<strong dir="ltr">${new URL(input).host}</strong`)
+          );
         }
       }
     assert.ok(seen.has('unicode-v1'));

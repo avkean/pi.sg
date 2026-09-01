@@ -90,6 +90,38 @@ function checkSecurity(response) {
   assert.equal(response.headers['set-cookie'], undefined);
 }
 
+function unescapeHTML(text) {
+  const entities = {
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&#39;': "'"
+  };
+  return text.replace(
+    /&amp;|&lt;|&gt;|&quot;|&#39;/g,
+    (entity) => entities[entity]
+  );
+}
+
+function previewDestination(response) {
+  const match = response.body
+    .toString()
+    .match(/class="copy-button" href="([^"]+)"/);
+  assert.ok(match, 'confirmation page should contain a destination link');
+  return unescapeHTML(match[1]);
+}
+
+function checkPreview(response, input) {
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.location, undefined);
+  assert.match(response.headers['content-type'], /^text\/html/);
+  assert.equal(response.headers['cache-control'], 'no-store');
+  assert.equal(response.headers['x-robots-tag'], 'noindex, nofollow');
+  assert.equal(previewDestination(response), new URL(input).href);
+  checkSecurity(response);
+}
+
 test('the configured public origin works behind HTTPS without trusting forwarded headers', async () => {
   const proxied = await serve({ port: 0, publicOrigin: 'https://pi.sg/' });
   try {
@@ -108,8 +140,7 @@ test('the configured public origin works behind HTTPS without trusting forwarded
     const decoded = await request('/' + result.payload, {
       origin: proxied.origin
     });
-    assert.equal(decoded.status, 302);
-    assert.equal(decoded.headers.location, options.body);
+    checkPreview(decoded, options.body);
     for (const origin of ['https://other.example', proxied.origin]) {
       const denied = await fetch(proxied.origin + '/api/compress', {
         ...options,
@@ -141,7 +172,7 @@ test('invalid public origins fail before starting workers', async () => {
     await assert.rejects(serve({ port: 0, publicOrigin }));
 });
 
-test('compact context and subword links stay on this origin and redirect exactly', async () => {
+test('compact context and subword links stay on this origin and preview exactly', async () => {
   const codecs = new Set();
   for (const input of [
     'https://github.com/example/project/issues/12345',
@@ -152,28 +183,23 @@ test('compact context and subword links stay on this origin and redirect exactly
     assert.match(result.payload, /^[A-Za-z0-9_-]{6,8192}$/);
     assert.equal(result.url, `${running.origin}/${result.payload}`);
     const response = await request('/' + result.payload);
-    assert.equal(response.status, 302);
-    assert.equal(response.headers.location, new URL(input).href);
-    assert.equal(response.headers['cache-control'], 'no-store');
-    assert.equal(response.body.length, 0);
-    checkSecurity(response);
+    checkPreview(response, input);
   }
   assert.deepEqual(codecs, new Set(['subword-compact', 'context-compact']));
 });
 
-test('every frozen legacy P/S/D/L vector redirects through the new decoder', async () => {
+test('every frozen legacy P/S/D/L vector previews through the new decoder', async () => {
   assert.deepEqual(
     new Set(golden.map((row) => row.payload[0])),
     new Set('PSDL')
   );
   for (const { input, payload } of golden) {
     const response = await request('/' + payload);
-    assert.equal(response.status, 302);
-    assert.equal(response.headers.location, new URL(input).href);
+    checkPreview(response, input);
   }
 });
 
-test('Location uses URL serialization while preserving escapes, repeated keys and fragments', async () => {
+test('previews use URL serialization while preserving escapes, repeated keys and fragments', async () => {
   for (const input of [
     'HTTPS://EXAMPLE.COM:443/A?b=%2F&b=%2f#🍕',
     'HtTp://user:pass@xn--bcher-kva.example:80/a/../b?k=1&k=2#f',
@@ -181,12 +207,11 @@ test('Location uses URL serialization while preserving escapes, repeated keys an
     'https://example.com/a%00b?x=%0d%0a&bare=&empty&&y=z'
   ]) {
     const response = await request('/' + legacyDeflate(input));
-    assert.equal(response.status, 302);
-    assert.equal(response.headers.location, new URL(input).href);
+    checkPreview(response, input);
   }
 });
 
-test('redirects and confirmation never fetch the destination before the visitor follows the link', async () => {
+test('previews never fetch the destination before the visitor follows the link', async () => {
   let hits = 0;
   const destination = http.createServer((_req, res) => {
     hits++;
@@ -197,15 +222,11 @@ test('redirects and confirmation never fetch the destination before the visitor 
   try {
     const input = `http://127.0.0.1:${destination.address().port}/private?secret=unlogged#fragment`;
     const response = await request('/' + legacyDeflate(input));
-    assert.equal(response.status, 302);
-    assert.equal(response.headers.location, input);
+    checkPreview(response, input);
     const confirmation = await request('/' + legacyDeflate(input) + '~');
-    assert.equal(confirmation.status, 200);
-    assert.equal(confirmation.headers.location, undefined);
+    checkPreview(confirmation, input);
     assert.equal(hits, 0);
-    const continueUrl = confirmation.body
-      .toString()
-      .match(/class="copy-button" href="([^"]+)"/)[1];
+    const continueUrl = previewDestination(response);
     assert.equal(continueUrl, input);
     const target = new URL(continueUrl);
     const visit = await request(target.pathname + target.search, {
@@ -220,12 +241,10 @@ test('redirects and confirmation never fetch the destination before the visitor 
   }
 });
 
-test('legacy confirmation pages show the real host, escape URL text, and work without scripts', async () => {
-  for (const { payload } of golden) {
+test('preview pages show the real host, escape URL text, and work without scripts', async () => {
+  for (const { input, payload } of golden) {
     const response = await request('/' + payload + '~');
-    assert.equal(response.status, 200);
-    assert.equal(response.headers.location, undefined);
-    checkSecurity(response);
+    checkPreview(response, input);
   }
   const input =
     'https://trusted.example@evil.example:8443/{{host}}/{{url}}?template={{url}}&next=&quot;&x=1#<svg/onload=alert(1)>';
@@ -258,24 +277,12 @@ test('legacy confirmation pages show the real host, escape URL text, and work wi
     const shown = markup.match(
       /<p\s+class="destination-url"[^>]*>([\s\S]*?)<\/p>/
     )[1];
-    const entities = {
-      '&amp;': '&',
-      '&lt;': '<',
-      '&gt;': '>',
-      '&quot;': '"',
-      '&#39;': "'"
-    };
-    const unescape = (text) =>
-      text.replace(
-        /&amp;|&lt;|&gt;|&quot;|&#39;/g,
-        (entity) => entities[entity]
-      );
     assert.equal(
-      unescape(shown.replace(/<[^>]*>/g, '').trim()),
+      unescapeHTML(shown.replace(/<[^>]*>/g, '').trim()),
       new URL(address).href
     );
     assert.equal(
-      unescape(shown.match(/<strong dir="ltr">([^<]*)<\/strong\s*>/)[1]),
+      unescapeHTML(shown.match(/<strong dir="ltr">([^<]*)<\/strong\s*>/)[1]),
       new URL(address).host
     );
   }
@@ -409,6 +416,8 @@ test('request headers are capped at 16 KiB and protocol upgrades are rejected', 
 test('all allowlisted assets serve exact bytes, gzip and Brotli with appropriate caching', async () => {
   for (const [path, relative, type] of [
     ['/', '../public/index.html', 'text/html'],
+    ['/privacy', '../public/privacy.html', 'text/html'],
+    ['/privacy/', '../public/privacy.html', 'text/html'],
     ['/assets/style.css', '../public/style.css', 'text/css'],
     ['/assets/app.js', '../dist/app.js', 'text/javascript'],
     ['/assets/worker.js', '../dist/worker.js', 'text/javascript'],
@@ -477,7 +486,7 @@ test('all allowlisted assets serve exact bytes, gzip and Brotli with appropriate
   }
 });
 
-test('conditional requests never cache previews, redirects or errors', async () => {
+test('conditional requests never cache previews or errors', async () => {
   const asset = await request('/assets/style.css');
   for (const tag of [
     '*',
@@ -494,7 +503,7 @@ test('conditional requests never cache previews, redirects or errors', async () 
   });
   assert.equal(stale.status, 200);
   for (const [path, status] of [
-    ['/' + golden[0].payload, 302],
+    ['/' + golden[0].payload, 200],
     ['/' + golden[0].payload + '~', 200],
     ['/AAAAAA', 400]
   ]) {
@@ -526,7 +535,7 @@ test('compression negotiation respects exclusions and explicit quality values', 
   assert.equal(response.status, 406);
 });
 
-test('health, errors and redirects support HEAD without a body', async () => {
+test('health, errors and previews support HEAD without a body', async () => {
   for (const path of ['/health', '/AAAAAA', '/' + golden[0].payload]) {
     const get = await request(path);
     const head = await request(path, { method: 'HEAD' });
@@ -556,8 +565,7 @@ test('test landing is opt-in, harmless and never reflects its query', async () =
     const response = await request('/' + legacyDeflate(input), {
       origin: local.origin
     });
-    assert.equal(response.status, 302);
-    assert.equal(response.headers.location, input);
+    checkPreview(response, input);
   } finally {
     await local.close();
     await local.close();
@@ -596,7 +604,7 @@ test('HTTP worker saturation/deadlines return 503, then the server recovers', as
     assert.equal(recovered.headers['retry-after'], '1');
     await delay(1000);
   } while (performance.now() < recoveryDeadline);
-  assert.equal(recovered.status, 302);
+  checkPreview(recovered, golden[0].input);
 });
 
 function workerURL(source) {

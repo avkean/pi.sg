@@ -3,16 +3,6 @@ import { toWide, fromWide } from './wide.mjs';
 import { isNativeFrame, toNativeFrame } from './native-frame.mjs';
 import { fromBase64 } from '../codecs/core/bytes.mjs';
 
-export function withConfirmation(url, enabled = false) {
-  if (!enabled) return url;
-  const link = url + '~';
-  if (new URL(link).href.length > MAX_LINK_CHARS)
-    throw new RangeError(
-      'The confirmation marker would exceed the link size limit.'
-    );
-  return link;
-}
-
 // A display alphabet is a transport choice, separate from the compressor.
 // Both forms carry the same versioned, checksummed payload.
 export function renderResult(

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="How pi.sg handles links, logs, and security."
+    />
+    <meta name="referrer" content="no-referrer" />
+    <title>Privacy &amp; security | pi.sg</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/assets/style.css" />
+  </head>
+  <body>
+    <main class="policy-page">
+      <a class="back-link" href="/">← pi.sg</a>
+      <header>
+        <h1>Privacy &amp; security</h1>
+        <p>Pi doesn't keep a history of the links you make or open.</p>
+      </header>
+
+      <section>
+        <h2>Your links</h2>
+        <p>Pi has no accounts, cookies, analytics, or link database.</p>
+        <p>
+          With extra compression on, your browser sends the link to Pi's server.
+          The server compresses it in memory, returns the result, and does not
+          save the original. Turn extra compression off to compress the link
+          entirely in your browser.
+        </p>
+        <p>
+          The original address is inside the Pi link itself. When someone opens
+          it, Pi unpacks the address in memory and shows it before they
+          continue.
+        </p>
+      </section>
+
+      <section>
+        <h2>Logs</h2>
+        <p>
+          Pi's app and web proxy do not keep access logs, so they do not record
+          the links you submit or open, your IP address, or details about your
+          browser.
+        </p>
+        <p>
+          Pi uses Bunny CDN to deliver and protect the site. Access and extended
+          logging are off, and Pi does not forward or permanently store CDN
+          logs. IP anonymisation remains enabled.
+        </p>
+        <p>
+          Bunny still handles the network data needed to serve each request
+          under its
+          <a href="https://bunny.net/privacy/" rel="noreferrer"
+            >privacy policy</a
+          >. Pi adds no analytics or tracking.
+        </p>
+      </section>
+
+      <section>
+        <h2>Link safety</h2>
+        <p>
+          Every Pi link shows where it goes before you continue. Pi does not
+          visit or scan the destination, so the preview is not a safety check.
+        </p>
+        <p>
+          Pi links are compressed, not encrypted, so anyone with the link can
+          unpack it. Pi only handles the address and does not host, control, or
+          endorse the site at the other end. What you create, share, or open is
+          up to you.
+        </p>
+      </section>
+
+      <picture class="brand">
+        <source
+          media="(prefers-color-scheme: dark)"
+          srcset="/avkean_light.svg"
+        />
+        <img
+          src="/avkean_dark.svg"
+          alt="Avkean Systems"
+          width="224"
+          height="59"
+        />
+      </picture>
+    </main>
+  </body>
+</html>

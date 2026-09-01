@@ -1,8 +1,8 @@
 # Link formats
 
-Pi stores the destination in the link, not in a database. Decoding must recover the original URL byte for byte. The HTTP redirect then uses normal URL serialization for its `Location` header.
+Pi stores the destination in the link, not in a database. Decoding must recover the original URL byte for byte. The confirmation page uses normal URL serialization when it shows and opens the destination.
 
-A single literal `~` after the payload asks for a confirmation page instead of a redirect. It works with old links and both display alphabets. The suffix is outside the encoded data and counts toward the sharing limit. Only the server strips it, before decoding; codecs and their checksums are unchanged. The page shows the serialized address without fetching it and works without JavaScript.
+Every encoded link opens a confirmation page. A single literal `~` after the payload remains accepted for links made by older versions, but it no longer changes the behavior. The suffix is outside the encoded data. Only the server strips it before decoding, so codecs and their checksums are unchanged. The page shows the serialized address without fetching it and works without JavaScript.
 
 ## Compatibility
 

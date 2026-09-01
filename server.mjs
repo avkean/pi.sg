@@ -23,6 +23,8 @@ const securityHeaders = Object.freeze({
 });
 const routes = new Map([
   ['/', ['public/index.html', 'text/html; charset=utf-8']],
+  ['/privacy', ['public/privacy.html', 'text/html; charset=utf-8']],
+  ['/privacy/', ['public/privacy.html', 'text/html; charset=utf-8']],
   ['/assets/style.css', ['public/style.css', 'text/css; charset=utf-8']],
   ['/assets/app.js', ['dist/app.js', 'text/javascript; charset=utf-8']],
   ['/assets/worker.js', ['dist/worker.js', 'text/javascript; charset=utf-8']],
@@ -235,9 +237,9 @@ export async function serve({
     if (typeof raw !== 'string' || raw[0] !== '/' || raw.length > 8193) {
       return invalid(req, res);
     }
-    // The suffix selects the screen; it isn't part of the encoded URL.
-    const confirmation = raw.endsWith('~');
-    let payload = raw.slice(1, confirmation ? -1 : undefined);
+    // The old suffix remains valid but every link now uses the preview screen.
+    const marked = raw.endsWith('~');
+    let payload = raw.slice(1, marked ? -1 : undefined);
     if (!/^[A-Za-z0-9_-]{6,8192}$/.test(payload)) {
       try {
         if (!/^(?:%[A-Fa-f0-9]{2})+$/.test(payload)) return invalid(req, res);
@@ -262,8 +264,7 @@ export async function serve({
       ) {
         return invalid(req, res);
       }
-      if (confirmation) return await confirm(req, res, destination);
-      send(req, res, 302, '', { Location: destination.href });
+      await confirm(req, res, destination);
     } catch (error) {
       if (res.destroyed) return;
       if (error.code === 'INVALID') return invalid(req, res);

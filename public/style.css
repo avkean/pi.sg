@@ -227,9 +227,6 @@ details p {
 .extra-option {
   margin: 1rem 0 0;
 }
-.confirmation-option {
-  margin: 0.5rem 0 0;
-}
 .confirmation-page {
   width: min(32rem, 100%);
 }
@@ -247,7 +244,7 @@ details p {
   height: auto;
 }
 .confirmation-page .brand {
-  margin: 0 0 2.5rem;
+  margin: 0 0 2rem;
 }
 .confirmation-page h1,
 .error-page h1 {
@@ -256,7 +253,7 @@ details p {
   line-height: 1.2;
 }
 .confirmation-page h1 {
-  font-size: 1.75rem;
+  font-size: 2rem;
 }
 .destination-url {
   max-height: 12rem;
@@ -302,20 +299,56 @@ details p {
   max-width: 100%;
   margin-top: 1.75rem;
 }
+
+details:not([open]) + .maker {
+  margin-top: 1.25rem;
+}
 .maker .brand {
-  width: min(14rem, calc(100% - 7rem));
+  width: min(14rem, calc(100% - 9.5rem));
   margin: 0;
 }
-.source-link {
+.footer-links {
+  display: flex;
   flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
   padding-left: 1rem;
   border-left: 1px solid var(--line);
+}
+.footer-links a {
+  flex: 0 0 auto;
   color: var(--muted);
   font-size: 0.8125rem;
-  line-height: 2rem;
+  line-height: 1.4;
 }
-.source-link:hover {
+.footer-links a:hover {
   color: var(--ink);
+}
+.policy-page {
+  width: min(40rem, 100%);
+}
+.policy-page header {
+  margin: 1.25rem 0 2rem;
+}
+.policy-page h1 {
+  font-size: clamp(2rem, 7vw, 2.5rem);
+}
+.policy-page h2 {
+  margin: 2rem 0 0.5rem;
+  font-size: 1.125rem;
+}
+.policy-page section p {
+  margin: 0.75rem 0 0;
+  max-width: 65ch;
+}
+.policy-page .brand {
+  width: 11rem;
+  margin: 2.5rem 0 0;
+}
+.back-link {
+  color: var(--muted);
+  font-size: 0.875rem;
 }
 @media (prefers-color-scheme: dark) {
   .brand img {

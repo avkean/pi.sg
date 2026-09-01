@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import http from 'node:http';
 import { createCompressor } from '../src/compressor.mjs';
 import { toWide, fromWide, isWide } from '../src/wide.mjs';
-import { renderResult, withConfirmation } from '../src/surface.mjs';
+import { renderResult } from '../src/surface.mjs';
 import { serve } from '../server.mjs';
 import { PREFIXES } from '../codecs/compact/frame.mjs';
 import { seal, toBase64 } from '../codecs/core/bytes.mjs';
@@ -40,6 +40,28 @@ function request(path) {
     req.on('error', reject);
     req.end();
   });
+}
+
+function previewDestination(response) {
+  const match = response.body.match(/class="copy-button" href="([^"]+)"/);
+  assert.ok(match, 'confirmation page should contain a destination link');
+  return match[1].replace(
+    /&amp;|&lt;|&gt;|&quot;|&#39;/g,
+    (entity) =>
+      ({
+        '&amp;': '&',
+        '&lt;': '<',
+        '&gt;': '>',
+        '&quot;': '"',
+        '&#39;': "'"
+      })[entity]
+  );
+}
+
+function checkPreview(response, input) {
+  assert.equal(response.status, 200);
+  assert.equal(response.location, undefined);
+  assert.equal(previewDestination(response), new URL(input).href);
 }
 
 const examples = [
@@ -86,7 +108,7 @@ test('new frames use unused markers, retain old structured links and keep all ch
   }
 });
 
-test('compact and plain links carry identical data and redirect through the real HTTP server', async () => {
+test('compact and plain links carry identical data and preview through the real HTTP server', async () => {
   for (const input of examples) {
     const compact = pi.encode(input, { origin: running.origin });
     const plain = pi.encode(input, { origin: running.origin, format: 'ascii' });
@@ -99,8 +121,7 @@ test('compact and plain links carry identical data and redirect through the real
     assert.equal(pi.decode(plain.payload), input);
     for (const form of [compact, plain]) {
       const response = await request(new URL(form.url).pathname);
-      assert.equal(response.status, 302);
-      assert.equal(response.location, new URL(input).href);
+      checkPreview(response, input);
     }
   }
 });
@@ -120,42 +141,28 @@ test('Unicode normalization still restores the exact versioned payload and desti
     const normalized = result.payload.normalize(form);
     assert.equal(pi.decode(normalized), expected);
     const response = await request('/' + encodeURIComponent(normalized));
-    assert.equal(response.status, 302);
-    assert.equal(response.location, new URL(expected).href);
+    checkPreview(response, expected);
     const confirmation = await request(
       '/' + encodeURIComponent(normalized) + '~'
     );
-    assert.equal(confirmation.status, 200);
-    assert.equal(confirmation.location, undefined);
+    checkPreview(confirmation, expected);
   }
 });
 
-test('confirmation works with ASCII, native Unicode and generic Unicode without changing their payloads', async () => {
+test('preview is mandatory for ASCII and Unicode links with or without the old suffix', async () => {
   for (const input of examples) {
     for (const format of ['ascii', 'compact']) {
       const result = pi.encode(input, { origin: running.origin, format });
-      const marked = withConfirmation(result.url, true);
-      assert.equal(marked, result.url + '~');
-      const response = await request(new URL(marked).pathname);
-      assert.equal(response.status, 200);
-      assert.equal(response.location, undefined);
-      assert.ok(response.body.includes(new URL(input).host));
-      assert.ok(response.body.includes('Continue →'));
+      assert.ok(!result.url.endsWith('~'));
+      for (const url of [result.url, result.url + '~']) {
+        const response = await request(new URL(url).pathname);
+        checkPreview(response, input);
+        assert.ok(response.body.includes(new URL(input).host));
+        assert.ok(response.body.includes('Continue →'));
+      }
       assert.equal(pi.decode(result.payload), input);
     }
   }
-});
-
-test('the optional confirmation character respects the serialized sharing limit', () => {
-  const base = 'https://pi.sg/';
-  const exact = base + 'A'.repeat(8192 - base.length);
-  assert.equal(withConfirmation(exact), exact);
-  assert.equal(withConfirmation(exact.slice(0, -1), true).length, 8192);
-  assert.throws(() => withConfirmation(exact, true), /size limit/);
-  const wide = base + '中'.repeat(908);
-  const escapedLimit = wide + 'A'.repeat(8192 - new URL(wide).href.length);
-  assert.ok(escapedLimit.length < 1000);
-  assert.throws(() => withConfirmation(escapedLimit, true), /size limit/);
 });
 
 test('damaged, mixed and invalid escaped payloads cannot enter another route', async () => {

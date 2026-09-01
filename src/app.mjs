@@ -1,7 +1,6 @@
 import { createEncoder } from './client.mjs';
 import { prepareInput, friendlyError } from './input.mjs';
 import { enhance } from './enhance.mjs';
-import { withConfirmation } from './surface.mjs';
 
 const form = document.querySelector('#compress-form');
 const input = document.querySelector('#input');
@@ -16,7 +15,6 @@ const copyStatus = document.querySelector('#copy-status');
 const plain = document.querySelector('#plain');
 const unicode = document.querySelector('#unicode');
 const extra = document.querySelector('#extra');
-const confirmation = document.querySelector('#confirmation');
 const encoder = createEncoder({
   workerUrl: new URL('./worker.js', import.meta.url),
   timeoutMs: 300,
@@ -53,23 +51,7 @@ function showResult(current, source, version) {
 
 function displayResult() {
   if (!result) return;
-  let url;
-  try {
-    url = withConfirmation(result.url, confirmation.checked);
-  } catch {
-    output.value = '';
-    copy.disabled = true;
-    copy.textContent = 'Copy link';
-    copyStatus.textContent = '';
-    clearTimeout(copiedTimer);
-    open.hidden = true;
-    open.removeAttribute('href');
-    error.textContent =
-      'This link is at the size limit. Turn off “Show destination first” to share it.';
-    error.hidden = false;
-    stats.textContent = 'The confirmation screen needs one extra character.';
-    return;
-  }
+  const url = result.url;
   if (output.value !== url) {
     clearTimeout(copiedTimer);
     copy.textContent = 'Copy link';
@@ -185,7 +167,6 @@ input.addEventListener('input', () => changed());
 plain.addEventListener('change', () => changed(true));
 unicode.addEventListener('change', () => changed(true));
 extra.addEventListener('change', () => changed(true));
-confirmation.addEventListener('change', displayResult);
 input.addEventListener('keydown', (event) => {
   if (event.key === 'Enter' && !event.isComposing) {
     event.preventDefault();

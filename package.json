@@ -9,6 +9,7 @@
     "start": "node server.mjs",
     "pretest": "npm run build",
     "test": "node --test test/*.test.mjs",
+    "check": "prettier --check \"src/**/*.mjs\" \"codecs/**/*.mjs\" \"test/**/*.mjs\" \"public/*.{html,css}\" build.mjs server.mjs README.md \"docs/*.md\" \".forgejo/workflows/*.yml\"",
     "format": "prettier --write src codecs test public build.mjs server.mjs"
   },
   "engines": {

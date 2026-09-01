@@ -1,6 +1,6 @@
 services:
   app:
-    image: pi-compressor:${PI_RELEASE:-latest}
+    image: pi-compressor:${PI_RELEASE:?Set PI_RELEASE to an exact release tag}
     networks:
       proxy:
         aliases: [pi-compressor]

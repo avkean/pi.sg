@@ -10,11 +10,12 @@ Extra compression uses the server's computing power to try making your link even
 
 The destination stays inside the Pi link, so Pi doesn't need a link database. It also doesn't visit the destination.
 
+Every Pi link shows the full destination before it can be opened. Read the [privacy and security page](https://pi.sg/privacy) for the logging policy and other details.
+
 ## Options
 
 - **Unicode** makes the link look shorter.
 - **ASCII** works better in apps that struggle with Unicode links.
-- **Show destination first** lets the person opening the link see where it goes before continuing.
 - **Extra compression** asks the server to try more compression methods. Pi only uses its result if it is shorter.
 
 Some links may still get longer. Pi always shows the real difference before you copy the link.
@@ -46,7 +47,7 @@ flowchart TD
 
     J --> K[When opened, the format marker selects the right decoder]
     K --> L[Rebuild the original URL]
-    L --> M[Show the destination or redirect]
+    L --> M[Show the destination before opening]
 ```
 
 The URL structure model knows that links usually contain a scheme, domain, path, query, and fragment. Common domains and URL patterns can be stored as small numbers instead of being written out in full.

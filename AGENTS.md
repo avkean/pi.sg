@@ -24,7 +24,7 @@ Pi is a small link compressor. Keep it that way.
 - Keep old decoders and model data. Don't change the meaning of an existing format marker. A new format needs its own marker or version.
 - Always return an encoded link, even when it's longer. Show the actual character difference.
 - Keep both Unicode and ASCII modes. Extra server compression may replace the browser result only when it's shorter.
-- Keep confirmation optional and on by default for new links. A trailing `~` shows the destination; it is not part of the codec payload or a safety check. Existing links without it still redirect directly.
+- Every encoded Pi link must show the destination before opening. A trailing `~` remains accepted for compatibility but does not change the behavior. Never restore automatic redirects.
 - Don't store submitted URLs, fetch their destinations, add analytics, or remove worker deadlines and size limits.
 - Keep required dependency and dataset notices.
 

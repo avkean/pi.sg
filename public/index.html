@@ -94,25 +94,18 @@
             (uses this server)</label
           >
         </p>
-        <p class="confirmation-option">
-          <label class="format-option"
-            ><input type="checkbox" id="confirmation" checked /> Show
-            destination first</label
-          >
-        </p>
       </form>
 
       <details>
         <summary>How does this work?</summary>
         <p>
-          Pi compresses your link, just like a zip file compresses files. When
-          someone opens it, Pi unpacks it to get the original address.
+          Pi compresses your link, like a zip file compresses files. When
+          someone opens it, Pi unpacks it and shows the original address.
         </p>
         <p>
-          Extra compression uses the server's computing power to try making your
-          link even smaller. Your link gets sent to the server, but isn't
-          stored. If you'd rather keep everything in your browser, you can
-          switch it off.
+          Extra compression uses Pi's server to try making the link smaller. The
+          server doesn't save your link. Turn it off to keep everything in your
+          browser.
         </p>
         <p class="credits">
           Domain data adapted from
@@ -144,19 +137,21 @@
             height="59"
           />
         </picture>
-        <a
-          class="source-link"
-          href="https://git.avkean.com/avkean/pi.sg"
-          target="_blank"
-          rel="noopener noreferrer"
-          >Source code</a
-        >
+        <nav class="footer-links" aria-label="Project">
+          <a href="/privacy">Privacy &amp; security</a>
+          <a
+            href="https://git.avkean.com/avkean/pi.sg"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Source code</a
+          >
+        </nav>
       </footer>
 
       <noscript
         ><p>
-          JavaScript is needed to compress a link. Existing Pi links still
-          redirect without it.
+          JavaScript is needed to compress a link. Existing Pi links still work
+          without it.
         </p></noscript
       >
     </main>
