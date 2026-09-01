@@ -2,70 +2,65 @@
 
 A cool link compressor that doesn't store your links.
 
-Paste a URL and copy the result. The destination lives inside the link, so there's no account or link database.
+[Try Pi](https://pi.sg)
 
-- Unicode makes shorter-looking links. ASCII works better in apps that struggle with Unicode URLs.
-- “Show destination first” is on by default. Untick it for a direct redirect. The preview adds one `~`; existing links still work as before.
-- Extra compression asks the server to try a few more methods. It only replaces the browser result if it's shorter. Untick it to keep creation in your browser.
-- Some URLs get longer. Pi always shows the actual difference, including the preview marker.
+Pi compresses your link, just like a zip file compresses files. When someone opens it, Pi unpacks it to get the original address.
 
-Pi doesn't visit destinations or log submitted URLs. This isn't encryption: anyone with a link can unpack it. The preview doesn't check whether a site is safe.
+Extra compression uses the server's computing power to try making your link even smaller. Your link is sent to the server, but isn't stored anywhere. Switch it off if you want to keep everything in your browser.
 
-## Run locally
+The destination stays inside the Pi link, so Pi doesn't need a link database. It also doesn't visit the destination.
 
-Use Node 26.5 or newer and a C++17 compiler. The container includes the build tools and pins Node 26.8.1. On macOS, install the Xcode command line tools; on Debian or Ubuntu, install `g++`. The build also needs Node's headers. If they aren't beside your Node installation, set `PI_NODE_HEADERS` to the directory containing `node_api.h`.
+## Options
+
+- **Unicode** makes the link look shorter.
+- **ASCII** works better in apps that struggle with Unicode links.
+- **Show destination first** lets the person opening the link see where it goes before continuing.
+- **Extra compression** asks the server to try more compression methods. Pi only uses its result if it is shorter.
+
+Some links may still get longer. Pi always shows the real difference before you copy the link.
+
+## How Pi works
+
+```mermaid
+flowchart LR
+    A[Paste a URL] --> B[Your browser tries several methods]
+    B --> C{Extra compression?}
+    C -->|Off| E[Check the results]
+    C -->|On| D[The server tries more methods]
+    D --> E
+    E --> F[Keep the shortest result]
+    F --> G[Copy and share]
+    G --> H[Unpack the original URL]
+    H --> I[Show the destination or redirect]
+```
+
+Pi looks for familiar patterns in the domain, path, query, words, and numbers. It tries several ways to compress them, checks that each result turns back into the exact same URL, then keeps the shortest one.
+
+The compressed data and a small damage check are placed inside the Pi link. When someone opens it, Pi reads that data, rebuilds the original URL, and either redirects there or shows the destination first.
+
+## Run Pi
+
+You need Node.js 26.5 or newer, npm, and a C++17 compiler.
 
 ```sh
 npm ci
 npm start
 ```
 
-Open [localhost:8788](http://127.0.0.1:8788). Restart after changing server files or static assets.
+Open [localhost:8788](http://127.0.0.1:8788).
 
-The extra pass uses fixed word and URL models to pack common patterns more tightly. Its models stay on the server, so they don't add to the browser download. The small neural predictor runs on the CPU with a time limit, without any external service. Turn off extra compression to use only the browser codecs.
-
-## Deploy
-
-The included Docker Compose setup runs Pi behind Caddy with HTTPS. Pi runs as a non-root user with a read-only filesystem and resource limits. Its port isn't exposed to the internet. No database or volume is needed for links; Caddy's volumes hold certificates and configuration.
-
-1. Put the project on a Linux server with Docker Compose. Run `npm ci && npm test` before releasing.
-2. Point `pi.sg` at the server and allow ports 80 and 443. Set `PI_APP_DOMAIN` to use a staging domain first.
-3. Run `docker compose config --quiet`, then `docker compose up -d --build`.
-4. Check `/health`, copy and open both link formats, and check previews on a phone. Test long Unicode links through the actual proxy before opening the site to traffic.
-
-Keep the previous image for rollback. Back up the Caddy certificate volume and keep every codec and model when updating; old links depend on them.
-
-Once `n/o` links have been shared, don't roll back to an image without their decoders. Set `PI_PREDICTION_ENCODE=0` and recreate the app to stop the new encoding pass while keeping those links working.
-
-With an existing proxy on `proxy_net`, start only the app:
-
-```sh
-docker compose -p pi-compressor -f compose.yaml -f compose.proxy.yaml up -d --build app
-```
-
-Point the proxy at `pi-compressor:8788`. Let the app set its Content Security Policy; a policy from a static landing page will block the compressor. Disable CDN request logging and cache overrides for link responses, and purge the old site when switching over.
-
-Without Docker, build once with `npm ci && npm run build`, then run `node server.mjs` under a service manager behind an HTTPS proxy:
-
-| Variable        | Default          | Purpose                                                                    |
-| --------------- | ---------------- | -------------------------------------------------------------------------- |
-| `PI_APP_PORT`   | `8788`           | HTTP port                                                                  |
-| `PI_APP_HOST`   | `127.0.0.1`      | Listening address; use `0.0.0.0` only inside an isolated container/network |
-| `PI_APP_ORIGIN` | Listening origin | Public origin, such as `https://pi.sg`; required behind HTTPS              |
-
-Don't rewrite or decode the compressed path at the proxy. Don't cache redirects, previews, or API responses. Static files support gzip, Brotli, and conditional caching. The Caddyfile disables request logging; keep URL paths, bodies, and referrers out of any CDN or hosting logs too.
-
-## Bot protection
-
-No CAPTCHA is enabled. Start with the existing work limits and add edge rate limits if needed. If the extra-compression API is abused, add ALTCHA there without blocking browser compression or shared links. Anubis needs custom routing and changes to the current cookie-free API request.
-
-The [production notes](docs/production.md) cover the launch checks and integration plan, including proof verification, expiry, and replay protection.
-
-## Development
+To run the tests:
 
 ```sh
 npm test
-npm run format
 ```
 
-`public/` holds the pages, `src/` the app and server helpers, and `codecs/` the formats. Keep the [format rules](docs/format.md), saved link fixtures, and model checksums intact. Dependency and dataset credits are in [NOTICE.md](NOTICE.md).
+You can also use Docker:
+
+```sh
+docker compose up --build
+```
+
+## More details
+
+See [production notes](docs/production.md) for server limits, rollback steps, and optional bot protection. The exact link formats are documented in [format notes](docs/format.md). Credits and licenses are in [NOTICE.md](NOTICE.md).
