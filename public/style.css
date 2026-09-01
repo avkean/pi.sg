@@ -295,11 +295,27 @@ details p {
   font-size: 0.8125rem;
 }
 .maker {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: fit-content;
+  max-width: 100%;
   margin-top: 1.75rem;
 }
 .maker .brand {
-  width: min(14rem, 100%);
+  width: min(14rem, calc(100% - 7rem));
   margin: 0;
+}
+.source-link {
+  flex: 0 0 auto;
+  padding-left: 1rem;
+  border-left: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 2rem;
+}
+.source-link:hover {
+  color: var(--ink);
 }
 @media (prefers-color-scheme: dark) {
   .brand img {
