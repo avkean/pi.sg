@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { createCompressor } from '../src/server-compressor.mjs';
+import { createCompressor, createDecoder } from '../src/server-compressor.mjs';
 import { createCompressor as createPrevious } from '../src/compressor.mjs';
 import { renderResult } from '../src/surface.mjs';
 import { serve } from '../server.mjs';
@@ -11,6 +11,7 @@ const model = await readFile(
 );
 const current = createCompressor(model),
   previous = createPrevious(model);
+current.warmup();
 const inputs = [
   'https://drive.google.com/drive/u/1/folders/1ec0HU6_1vqnyvGlO2iFnfZeVNQKh_jpM',
   'https://www.allrecipes.com/recipe/240438/easy-slow-cooker-chicken-fajitas/',
@@ -31,8 +32,41 @@ test('disabling prediction keeps new links readable without issuing more of them
   assert.ok(
     fallback
       .encodeAdditional(inputs[1])
-      .every((candidate) => !['n', 'o'].includes(candidate.payload[0]))
+      .every(
+        (candidate) =>
+          candidate.codec !== 'statistical-v1' &&
+          candidate.codec !== 'neural-v1' &&
+          candidate.codec !== 'mixed-v1'
+      )
   );
+});
+
+test('redirect decoder exposes no encoder and reads every server format', () => {
+  const decoder = createDecoder(model, { prediction: true });
+  assert.deepEqual(Object.keys(decoder).sort(), ['decode', 'warmup']);
+  decoder.warmup();
+  for (const input of inputs.slice(0, 5)) {
+    const old = previous.encode(input);
+    assert.equal(decoder.decode(old.payload), input);
+    for (const candidate of current.encodeAdditional(input)) {
+      const result = renderResult(candidate);
+      assert.equal(decoder.decode(result.payload), input);
+    }
+  }
+});
+
+test('links beyond the mixed model limit keep statistical compression', () => {
+  const input =
+    'https://example.com/?' + 'term=link-compression&'.repeat(14) + 'empty=';
+  assert.ok(Buffer.byteLength(input) > 256);
+  const candidate = current
+    .encodeAdditional(input)
+    .find((result) => result.codec === 'statistical-v1');
+  assert.ok(candidate);
+  for (const format of ['compact', 'ascii']) {
+    const result = renderResult(candidate, { format });
+    assert.equal(current.decode(result.payload), input);
+  }
 });
 
 test('server candidates preserve old links and never increase the chosen link length', () => {
@@ -53,10 +87,14 @@ test('server candidates preserve old links and never increase the chosen link le
 
 test('every additional codec and both transports preview through the actual HTTP worker', async () => {
   const app = await serve({ port: 0 });
+  const fallback = createCompressor(model, { prediction: false });
   try {
     const seen = new Set();
     for (const input of inputs.slice(1, 5))
-      for (const candidate of current.encodeAdditional(input)) {
+      for (const candidate of [
+        ...current.encodeAdditional(input),
+        ...fallback.encodeAdditional(input)
+      ]) {
         seen.add(candidate.codec);
         for (const format of ['compact', 'ascii']) {
           const result = renderResult(candidate, {
@@ -75,7 +113,7 @@ test('every additional codec and both transports preview through the actual HTTP
       }
     assert.ok(seen.has('unicode-v1'));
     assert.ok(seen.has('url-grammar-v1'));
-    assert.ok(seen.has('statistical-v1') || seen.has('neural-v1'));
+    assert.ok(seen.has('mixed-v1'));
     for (const path of [
       '/codecs/grammar/models/majestic-262144-pool.bin',
       '/src/compression-worker.mjs',

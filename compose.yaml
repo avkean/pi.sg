@@ -3,7 +3,7 @@ services:
     build: .
     environment:
       PI_APP_ORIGIN: https://${PI_APP_DOMAIN:-pi.sg}
-      PI_PREDICTION_ENCODE: ${PI_PREDICTION_ENCODE:-1}
+      PI_PREDICTION_ENCODE: ${PI_PREDICTION_ENCODE:-0}
     restart: unless-stopped
     init: true
     read_only: true

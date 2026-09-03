@@ -12,6 +12,7 @@ import { createCompressor } from '../src/compressor.mjs';
 import { encodeFast, OUTPUT_LIMIT_MESSAGE } from '../src/fast.mjs';
 import { createEncoder } from '../src/client.mjs';
 import { isWide, fromWide } from '../src/wide.mjs';
+import { isDense, isDenseWide } from '../src/dense.mjs';
 import { renderResult } from '../src/surface.mjs';
 
 const model = await readFile(
@@ -25,7 +26,10 @@ const short = 'https://a.co';
 function checkEncoded(result, input, origin = options.origin) {
   assert.notEqual(result.codec, 'original');
   assert.ok(
-    isWide(result.payload) || /^[A-Za-z0-9_-]{6,8192}$/.test(result.payload)
+    isWide(result.payload) ||
+      isDenseWide(result.payload) ||
+      isDense(result.payload) ||
+      /^[A-Za-z0-9_-]{6,8192}$/.test(result.payload)
   );
   assert.equal(result.url, new URL(origin).origin + '/' + result.payload);
   assert.ok(new URL(result.url).href.length <= 8192);

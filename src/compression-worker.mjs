@@ -14,7 +14,7 @@ parentPort.on('message', ({ id, input }) => {
       candidates: compressor.encodeAdditional(input)
     });
   } catch {
-    parentPort.postMessage({ id, type: 'invalid' });
+    parentPort.postMessage({ id, type: 'failed' });
   }
 });
 parentPort.postMessage({ type: 'ready' });

@@ -4,6 +4,7 @@
 !build.mjs
 !server.mjs
 !NOTICE.md
+!LICENSE
 !src/
 !src/**
 !codecs/

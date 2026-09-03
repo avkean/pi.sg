@@ -2,21 +2,22 @@
   "name": "pi.sg",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
     "prestart": "npm run build",
     "start": "node server.mjs",
     "pretest": "npm run build",
-    "test": "node --test test/*.test.mjs",
+    "test": "node --test --test-concurrency=2 test/*.test.mjs",
     "check": "prettier --check \"src/**/*.mjs\" \"codecs/**/*.mjs\" \"test/**/*.mjs\" \"public/*.{html,css}\" build.mjs server.mjs README.md \"docs/*.md\" \".forgejo/workflows/*.yml\"",
-    "format": "prettier --write src codecs test public build.mjs server.mjs"
+    "format": "prettier --write \"src/**/*.mjs\" \"codecs/**/*.mjs\" \"test/**/*.mjs\" \"public/*.{html,css}\" build.mjs server.mjs README.md \"docs/*.md\" \".forgejo/workflows/*.yml\""
   },
   "engines": {
     "node": ">=26.5.0"
   },
   "dependencies": {
-    "fflate": "0.8.2"
+    "fflate": "0.8.3"
   },
   "devDependencies": {
     "esbuild": "0.28.2",

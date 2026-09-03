@@ -1,0 +1,23 @@
+[
+  {
+    "input": "HTTPS://WWW.GOOGLE.COM.:0443/A%2fb?x=0&x=00&&bare&empty=#",
+    "bytes": 57,
+    "route": "split",
+    "ascii": "+(OWANqscGTd-s0awytAebO&zN(b-7=OAa6+d.yyq=D",
+    "unicode": "晇聀搳笃洎極ꐙ壳腠䪄쌗韓䫲阊䣻㴩샤钑"
+  },
+  {
+    "input": "HTTPS://mixframe-fixture.invalid:0443/日本語/🙂?x=%2f&x=%2F&&empty=#مرحباaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "bytes": 255,
+    "route": "full",
+    "ascii": "+6NA*RHUMQ=5XVii3T1FM@-o=&xvCSNQTY7Npc@h1UO_UU4_rZ7i.WJBP,EM*YmypB;ZmJU4@gtyf9j.2!6j7&+eqn+tqOhzP*:(;H!R7@8.+3vGOc_TodvV)&30e;RyW)_x_O0,c=712w",
+    "unicode": "쫃尨껚豯꼱渲능쭅種鐓蕟朓澫厒치쀱칓劲昛혌鿤줈굕쿶坨脸詽맓卍顮䭼聦灍绾튑䊄䶱渟䕌䈊咎癕犴䳟抭缚뙖몢㴭늞媪꾝岝跢잜펯긌쪿"
+  },
+  {
+    "input": "HTTPS://mixframe-fixture.invalid:0443/日本語/🙂?x=%2f&x=%2F&&empty=#مرحباaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "bytes": 256,
+    "route": "full",
+    "ascii": "(GI-y4$0jdMcD8ii3T1FM@-o=&xvCSNQTY7Npc@h1UO_UU4_rZ7i.WJBP,EM*YmypB;ZmJU4@gtyf9j.2!6j7&+eqn+tqOhzP*:(;H!R7@8.+3vGOc_TodvV)&30e;RyW)_x_O0,c=711T",
+    "unicode": "잸㛀恴퀰즵瀆謼謫잮쑖郲啩䂃꽟嶃탶왧탭윚滶왨쫜藬远鵵똈阐鰨쟊䰉繋閸桢姖袸缒洂濲춆놔骛鼥繇㬴휩홚䂴쭧㕂腵쀶䎺箮辶냀鎖䯩侩"
+  }
+]

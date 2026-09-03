@@ -147,15 +147,30 @@ export function createCompressor(modelBytes) {
     let result = null,
       plain = null;
     for (const candidate of candidates) {
-      let rendered;
+      let rendered, ascii;
       try {
         rendered = renderResult(candidate, { origin: base, format });
       } catch (error) {
         if (!(error instanceof RangeError)) throw error;
         else continue;
       }
-      if (!plain || candidate.payload.length < plain.payload.length)
-        plain = candidate;
+      if (format === 'ascii') {
+        ascii = rendered;
+      } else {
+        try {
+          ascii = renderResult(candidate, { origin: base, format: 'ascii' });
+        } catch (error) {
+          if (!(error instanceof RangeError)) throw error;
+        }
+      }
+      if (
+        ascii &&
+        (!plain ||
+          ascii.url.length < plain.url.length ||
+          (ascii.url.length === plain.url.length &&
+            ascii.asciiPayload.length < plain.asciiPayload.length))
+      )
+        plain = ascii;
       if (
         !result ||
         rendered.url.length < result.url.length ||
@@ -165,14 +180,13 @@ export function createCompressor(modelBytes) {
         result = rendered;
     }
     if (!result) selectEncoded([], base);
-    // The bounded worker client sends only the origin. Carry a plain winner
-    // too, so switching display format never selects a needlessly long link.
-    if (format === 'compact' && plain.payload !== result.asciiPayload) {
-      result.asciiAlternative = renderResult(plain, {
-        origin: base,
-        format: 'ascii'
-      });
-    }
+    // The worker always searches in compact mode, so retain its ASCII winner.
+    if (
+      format === 'compact' &&
+      plain &&
+      plain.asciiPayload !== result.asciiPayload
+    )
+      result.asciiAlternative = plain;
     if (decode(result.payload) !== input)
       throw Error('Internal exactness check failed');
     return result;

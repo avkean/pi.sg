@@ -13,6 +13,19 @@ await fs.access(resolve(headers, 'node_api.h')).catch(() => {
     'Node headers not found. Set PI_NODE_HEADERS to the directory containing node_api.h.'
   );
 });
+const neuralBackend = process.env.PI_NEURAL_BACKEND ?? 'auto';
+const fflateLicense = await fs.readFile(
+  new URL('licenses/fflate-MIT.txt', root),
+  'utf8'
+);
+const licenseBanner = `/*! fflate\n${fflateLicense.replaceAll('*/', '* /')}*/`;
+if (!['auto', 'scalar', 'avx2'].includes(neuralBackend))
+  throw Error('PI_NEURAL_BACKEND must be auto, scalar, or avx2.');
+if (
+  neuralBackend === 'avx2' &&
+  (process.platform !== 'linux' || process.arch !== 'x64')
+)
+  throw Error('The forced AVX2 backend requires Linux x64.');
 for (const name of ['context', 'neural']) {
   execFileSync(
     process.env.CXX || 'c++',
@@ -21,6 +34,9 @@ for (const name of ['context', 'neural']) {
       '-std=c++17',
       '-fno-fast-math',
       '-ffp-contract=off',
+      ...(name === 'neural' && neuralBackend !== 'auto'
+        ? [`-DPI_NEURAL_FORCE_${neuralBackend.toUpperCase()}=1`]
+        : []),
       ...(process.platform === 'darwin'
         ? ['-bundle', '-undefined', 'dynamic_lookup']
         : ['-shared', '-fPIC']),
@@ -42,7 +58,8 @@ for (const name of ['app', 'worker']) {
     platform: 'browser',
     target: 'es2022',
     minify: true,
-    legalComments: 'eof'
+    legalComments: 'eof',
+    banner: { js: licenseBanner }
   });
 }
 console.log('Built Pi.');

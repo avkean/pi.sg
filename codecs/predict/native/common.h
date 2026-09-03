@@ -3,8 +3,10 @@
 #include <node_api.h>
 
 #include <cstddef>
+#include <cfenv>
 #include <cstdint>
 #include <exception>
+#include <limits>
 #include <new>
 
 namespace pi::predict {
@@ -15,6 +17,16 @@ struct Error {
   const char* message;
   bool type = false;
 };
+
+static_assert(std::numeric_limits<double>::is_iec559);
+static_assert(std::numeric_limits<double>::radix == 2);
+static_assert(std::numeric_limits<double>::digits == 53);
+
+inline void CheckFloatingPoint() {
+  if (std::fegetround() != FE_TONEAREST) {
+    throw Error{"Unsupported floating-point rounding mode"};
+  }
+}
 
 inline void Check(napi_status status) {
   if (status != napi_ok) throw Error{"Node-API operation failed"};

@@ -1,20 +1,28 @@
 import { readFile } from 'node:fs/promises';
 import { parentPort, workerData } from 'node:worker_threads';
-import { createCompressor } from './server-compressor.mjs';
+import { createDecoder } from './server-compressor.mjs';
+import { isPredictionDeadline } from '../codecs/predict/deadline.mjs';
 
 const model = await readFile(
   new URL('../models/context-v1.bin', import.meta.url)
 );
-const pi = createCompressor(model, workerData);
-pi.warmup({ decoder: true });
+const pi = createDecoder(model, workerData);
+pi.warmup();
 
-parentPort.on('message', ({ id, payload }) => {
+parentPort.on('message', ({ id, payload, timeoutMs }) => {
   try {
-    const decoded = pi.decode(payload);
+    if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 300)
+      throw new Error('Invalid decode timeout');
+    const decoded = pi.decode(payload, {
+      deadline: performance.now() + timeoutMs
+    });
     parentPort.postMessage({ id, type: 'decoded', decoded });
-  } catch {
+  } catch (error) {
     // Neither the submitted payload nor decoder error text leaves this worker.
-    parentPort.postMessage({ id, type: 'invalid' });
+    parentPort.postMessage({
+      id,
+      type: isPredictionDeadline(error) ? 'timeout' : 'invalid'
+    });
   }
 });
 parentPort.postMessage({ type: 'ready' });

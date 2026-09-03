@@ -1,4 +1,5 @@
 import { createContext } from '../grammar/context.mjs';
+import { checkPredictionDeadline } from './deadline.mjs';
 export function createLanguageTails(contextModel, language, rich, budget) {
   const prior = 0.5,
     beta = 0.5,
@@ -121,8 +122,7 @@ export function createLanguageTails(contextModel, language, rich, budget) {
   function writeP(coder, bytes, prefix) {
     const state = initial(prefix);
     for (let i = 0; i <= bytes.length; i++) {
-      if (i % 8 === 0 && performance.now() > budget.expires)
-        throw Error('Prediction time budget');
+      if (i % 8 === 0) checkPredictionDeadline(budget.expires);
       const s = i === bytes.length ? 256 : bytes[i],
         p = distribution(state);
       coder.write(p.cdf[s], p.cdf[s + 1], p.total);
@@ -133,8 +133,7 @@ export function createLanguageTails(contextModel, language, rich, budget) {
     const state = initial(prefix),
       out = [];
     for (let i = 0; i <= limit; i++) {
-      if (i % 8 === 0 && performance.now() > budget.expires)
-        throw Error('Prediction time budget');
+      if (i % 8 === 0) checkPredictionDeadline(budget.expires);
       const p = distribution(state),
         target = coder.target(p.total);
       let lo = 0,

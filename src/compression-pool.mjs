@@ -2,6 +2,10 @@ import { Worker } from 'node:worker_threads';
 import { performance } from 'node:perf_hooks';
 import { validate } from '../codecs/core/core.mjs';
 import { shareContext } from '../codecs/predict/models.mjs';
+import {
+  isAsciiMixedPayload,
+  isUnicodeMixedPayload
+} from '../codecs/mixed/frame.mjs';
 export const MAX_SERVER_INPUT_BYTES = 32 * 1024;
 
 export class CompressionError extends Error {
@@ -12,11 +16,31 @@ export class CompressionError extends Error {
   }
 }
 
+function validCandidate(candidate) {
+  if (
+    typeof candidate?.codec !== 'string' ||
+    candidate.codec.length > 64 ||
+    (candidate.codec !== 'mixed-v1' && typeof candidate.payload !== 'string')
+  )
+    return false;
+  if (candidate.codec === 'mixed-v1')
+    return (
+      isAsciiMixedPayload(candidate.asciiPayload) &&
+      isUnicodeMixedPayload(candidate.unicodePayload) &&
+      candidate.payload === undefined
+    );
+  return (
+    /^[A-Za-z0-9_-]{6,8192}$/.test(candidate.payload) &&
+    candidate.asciiPayload === undefined &&
+    candidate.unicodePayload === undefined
+  );
+}
+
 // One persistent encoder, at most four waiting requests, and no result cache.
 // The 128 MiB V8 heap budget does not include Node's native allocations.
 export async function createCompressionPool({
   workerURL = new URL('./compression-worker.mjs', import.meta.url),
-  deadlineMs = 50,
+  deadlineMs = 55,
   startupTimeoutMs = 10_000,
   maxQueue = 4
 } = {}) {
@@ -154,17 +178,13 @@ export async function createCompressionPool({
         message.type === 'encoded' &&
         Array.isArray(message.candidates) &&
         message.candidates.length <= 8 &&
-        message.candidates.every(
-          (candidate) =>
-            typeof candidate?.codec === 'string' &&
-            candidate.codec.length <= 64 &&
-            typeof candidate.payload === 'string' &&
-            /^[A-Za-z0-9_-]{6,8192}$/.test(candidate.payload)
-        )
+        message.candidates.every(validCandidate)
       ) {
         finish(job, null, message.candidates);
       } else if (message.type === 'invalid') {
         finish(job, failure('INVALID'));
+      } else if (message.type === 'failed') {
+        return retire(slot, failure('UNAVAILABLE'), true);
       } else {
         return failed();
       }

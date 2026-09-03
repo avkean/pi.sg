@@ -97,13 +97,17 @@ export function createCompressionAPI({
       }
       if (!best) return send(req, res, 204);
       // Return only the link representation, never echo the submitted address.
-      send(
-        req,
-        res,
-        200,
-        JSON.stringify({ codec: best.codec, payload: best.asciiPayload }),
-        { 'Content-Type': 'application/json; charset=utf-8' }
-      );
+      const result =
+        best.codec === 'mixed-v1'
+          ? {
+              codec: best.codec,
+              asciiPayload: best.asciiPayload,
+              unicodePayload: best.unicodePayload
+            }
+          : { codec: best.codec, payload: best.asciiPayload };
+      send(req, res, 200, JSON.stringify(result), {
+        'Content-Type': 'application/json; charset=utf-8'
+      });
     } catch (error) {
       if (res.destroyed) return;
       const invalid = error.code === 'INVALID' || error instanceof TypeError;

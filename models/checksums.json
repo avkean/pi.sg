@@ -8,5 +8,9 @@
   "models/predict-v1/context.bin": "eeea8f104fa23f318aa1f1ab4a6aff70a27111ed71c19685ba285cf05085df22",
   "models/predict-v1/neural.bin": "68803a10f888b12e220ede5415b79b529ef6dd81c4b4df3e30e44e9516cc2515",
   "models/predict-v1/words.tsv": "dd8c27720a2e8b289ef0543e0c279b30ae7fd01e5db7adc1fbaebecf509df87c",
-  "models/predict-v1/bigrams.bin": "6cce19d6ef3316d43dc43ee08510fa1f986c57f62b988ac2437fab9b19448ae3"
+  "models/predict-v1/bigrams.bin": "6cce19d6ef3316d43dc43ee08510fa1f986c57f62b988ac2437fab9b19448ae3",
+  "models/mixed-v1/gate-full.json": "53bf68f4c111ec4d18afbcf1c1432b50f2bd2b30826b495ef88c1c9fb1530302",
+  "models/mixed-v1/gate-tail.json": "133eb05e02db213f3bae7614e0f4f1a9994d8564121d3a28eb0e7ce7c9df0e95",
+  "models/mixed-v1/log2-q24.le.bin": "c76f992333e50964daa5bc6159e845668f8253b483dac1aca8bbf39b25b0dc0d",
+  "models/mixed-v1/tanh-q15.le.bin": "3b43865c4257803ad94902d58acf32d5642fa12287b714283b92d242a37ed031"
 }

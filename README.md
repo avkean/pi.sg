@@ -4,13 +4,11 @@ A cool link compressor that doesn't store your links.
 
 [Try Pi](https://pi.sg)
 
-Pi compresses your link, just like a zip file compresses files. When someone opens it, Pi unpacks it to get the original address.
+Pi compresses your link, just like a zip file compresses files. When someone opens it, Pi unpacks it and shows the original address before they continue.
 
-Extra compression uses the server's computing power to try making your link even smaller. Your link is sent to the server, but isn't stored anywhere. Switch it off if you want to keep everything in your browser.
+Extra compression uses the server's computing power to try making your link even smaller. Your link goes to the server, but isn't saved. Switch it off if you want to keep everything in your browser.
 
-The destination stays inside the Pi link, so Pi doesn't need a link database. It also doesn't visit the destination.
-
-Every Pi link shows the full destination before it can be opened. Read the [privacy and security page](https://pi.sg/privacy) for the logging policy and other details.
+The original address stays inside the Pi link, so there's no link database. Pi doesn't visit the destination either. The [privacy and security page](https://pi.sg/privacy) explains what happens to your data.
 
 ## Options
 
@@ -22,45 +20,34 @@ Some links may still get longer. Pi always shows the real difference before you 
 
 ## How Pi works
 
-Pi doesn't rely on one compressor. It tries several different models and keeps the one that makes the shortest link.
+Pi tries several compressors and keeps the shortest valid result.
 
 ```mermaid
 flowchart TD
-    A[Original URL] --> B[Try several compression models]
-
-    B --> C[URL structure model]
-    B --> D[General text compression]
-    B --> E[Prediction models]
-
-    C --> C1[Common domains, paths, queries, IDs and numbers]
-    D --> D1[Subwords, repeated text, LZ, DEFLATE and Brotli]
-    E --> E1[Byte context, word pairs and a small neural model]
-
-    C1 --> F[Pack each result into compact bits]
-    D1 --> F
-    E1 --> F
-
-    F --> G[Add a damage check]
-    G --> H[Use the selected ASCII or Unicode format]
-    H --> I[Unpack each result and check it matches exactly]
-    I --> J[Keep the shortest link]
-
-    J --> K[When opened, the format marker selects the right decoder]
-    K --> L[Rebuild the original URL]
-    L --> M[Show the destination before opening]
+    A[Original link] --> B[URL patterns and repeated text]
+    A --> C[Extra compression, if enabled]
+    C --> D[URL and text predictor]
+    C --> E[Small neural predictor]
+    D --> F[Combine predictions]
+    E --> F
+    F --> G[Arithmetic coding]
+    B --> H[Pack as Unicode or ASCII]
+    G --> H
+    H --> I[Verify and keep the shortest link]
 ```
 
-The URL structure model knows that links usually contain a scheme, domain, path, query, and fragment. Common domains and URL patterns can be stored as small numbers instead of being written out in full.
+The browser compressors look for common URL parts and repeated text. They work without sending your link anywhere.
 
-The prediction models work a bit like autocomplete. One looks at the previous bytes and common word pairs. Another small neural model looks at up to 48 previous bytes. When a character is easy to predict, arithmetic coding can store it using less space.
+On the server, two predictors estimate what comes next in the URL. One uses common domains, words, and URL patterns; the other is a small neural model. Pi combines their predictions for each byte. Arithmetic coding then uses fewer bits for the bytes they predict well.
 
-These models are fixed files that come with Pi. They don't learn from submitted links. Extra compression runs the larger models on the server, while the browser handles the lighter methods itself.
+Pi packs those bits directly into the link's characters to avoid wasting space. Longer links, or requests that take too long, can use the other compressors instead. The models are fixed files that come with Pi and don't learn from submitted links.
 
-Before Pi uses a result, it unpacks it again. If it doesn't produce the exact original URL, including its spelling, escaping, query order, and fragment, Pi rejects it. The shortest valid result becomes the final link.
+Before returning a result, Pi checks it against every original byte. Links also include a small checksum to help detect accidental damage. It isn't encryption or protection against deliberate changes.
 
 ## Run Pi
 
 You need Node.js 26.5 or newer, npm, and a C++17 compiler.
+Node.js development headers are also required; set `PI_NODE_HEADERS` if needed.
 
 ```sh
 npm ci
@@ -69,18 +56,23 @@ npm start
 
 Open [localhost:8788](http://127.0.0.1:8788).
 
-To run the tests:
+To check the code:
 
 ```sh
+npm run check
 npm test
 ```
 
-You can also use Docker:
+For a fresh Docker installation:
 
 ```sh
-docker compose up --build
+PI_PREDICTION_ENCODE=1 docker compose up --build
 ```
+
+If you're upgrading an existing installation, follow the [rollout steps](docs/production.md#compose-with-an-existing-proxy) so the new decoder is available before Pi starts making new links.
 
 ## More details
 
 See [production notes](docs/production.md) for server limits, rollback steps, and optional bot protection. The exact link formats are documented in [format notes](docs/format.md). Credits and licenses are in [NOTICE.md](NOTICE.md).
+
+Pi is released under the [MIT License](LICENSE).

@@ -5,6 +5,7 @@ import {
 } from '../compact/arithmetic.mjs';
 import { schemeCode, locate } from '../grammar/domains.mjs';
 import { tableOf, writeTable } from '../grammar/grammar.mjs';
+import { isPredictionDeadline } from './deadline.mjs';
 const te = new TextEncoder(),
   td = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
 
@@ -51,7 +52,13 @@ function readBits(coder, mirror, width) {
   return value;
 }
 
-export function createDomains(domains, meta, tails, limit) {
+export function createDomains(
+  domains,
+  meta,
+  tails,
+  limit,
+  { captureTrace = false } = {}
+) {
   const ranks = Array.isArray(domains)
     ? new Map(domains.map((d, id) => [d, id]))
     : { get: (word) => domains.find(word) };
@@ -111,40 +118,61 @@ export function createDomains(domains, meta, tails, limit) {
       }
     }
   }
-  function encodeBytes(bytes) {
+  function encodeCandidates(bytes) {
     if (!(bytes instanceof Uint8Array) || bytes.length > limit)
       throw new RangeError('Domain codec byte limit');
     const input = td.decode(bytes),
       match = locate(input, ranks);
-    const fullCoder = new ArithmeticEncoder();
+    const fullCoder = new ArithmeticEncoder(captureTrace);
+    if (captureTrace) fullCoder.bind(bytes);
     fullCoder.write(0, 1, 2);
     tails.writeP(fullCoder, bytes, new Uint8Array());
-    const full = describe(fullCoder.finish()).terminal.bytes;
+    const full = describe(fullCoder.finish()).terminal.bytes,
+      candidates = [{ route: 'full', body: full }];
     if (!match || match.prefix.length > 255 || (match.port?.length ?? 0) > 31)
-      return full;
+      return candidates;
     try {
       const prefix = te.encode(match.scheme + '://' + match.authority),
         suffix = te.encode(match.suffix),
-        coder = new ArithmeticEncoder();
+        coder = new ArithmeticEncoder(captureTrace);
+      if (captureTrace) coder.bind(bytes);
       writeHeader(coder, match);
       tails.writeP(coder, suffix, prefix);
       const split = describe(coder.finish()).terminal.bytes;
-      return split.length < full.length ? split : full;
+      candidates.push({ route: 'split', body: split });
+      return candidates;
     } catch (error) {
-      if (error.message === 'Prediction time budget') return full;
+      if (isPredictionDeadline(error)) return candidates;
       throw error;
     }
   }
-  function decodeBytes(bytes) {
-    const coder = new ArithmeticDecoder(bytes),
+  function encodeBytes(bytes) {
+    const candidates = encodeCandidates(bytes);
+    let best = candidates[0].body;
+    for (const candidate of candidates)
+      if (candidate.body.length < best.length) best = candidate.body;
+    return best;
+  }
+  function decodeSource(source, expected) {
+    const coder = new ArithmeticDecoder(source),
       mirror = new ArithmeticEncoder();
+    const finish = (output) => {
+      const description = describe(mirror.finish());
+      if (expected !== null) {
+        const check = description.terminal.bytes;
+        if (
+          check.length !== expected.length ||
+          check.some((byte, index) => byte !== expected[index])
+        )
+          throw Error('Noncanonical prediction stream');
+        return output;
+      }
+      return { bytes: output, interval: description.interval };
+    };
     const mode = readBits(coder, mirror, 1);
     if (mode === 0) {
       const output = tails.readP(coder, mirror, new Uint8Array(), limit);
-      const check = describe(mirror.finish()).terminal.bytes;
-      if (check.length !== bytes.length || check.some((b, i) => b !== bytes[i]))
-        throw Error('Noncanonical full stream');
-      return output;
+      return finish(output);
     }
     const scheme = schemeFrom(readTable(coder, tables.scheme, mirror));
     const knownId = knownRanks
@@ -191,13 +219,10 @@ export function createDomains(domains, meta, tails, limit) {
     if (start.length > limit)
       throw new RangeError('Domain prefix output limit');
     const suffix = tails.readP(coder, mirror, start, limit - start.length);
-    const check = describe(mirror.finish()).terminal.bytes;
-    if (check.length !== bytes.length || check.some((b, i) => b !== bytes[i]))
-      throw Error('Noncanonical domain stream');
     const result = new Uint8Array(start.length + suffix.length);
     result.set(start);
     result.set(suffix, start.length);
-    return result;
+    return finish(result);
     function readBitsDecimal() {
       const n = coder.target(10);
       coder.consume(n, n + 1, 10);
@@ -205,8 +230,16 @@ export function createDomains(domains, meta, tails, limit) {
       return String(n);
     }
   }
+  function decodeBytes(bytes) {
+    return decodeSource(bytes, bytes);
+  }
+  function decodeRational(source) {
+    return decodeSource(source, null);
+  }
   return {
     encodeBytes,
-    decodeBytes
+    encodeCandidates,
+    decodeBytes,
+    decodeRational
   };
 }

@@ -8,6 +8,8 @@ import { createDomains } from './domains.mjs';
 import { createLanguageTails } from './language.mjs';
 import { createNeuralTails } from './neural.mjs';
 import { loadWords } from './words.mjs';
+import { describe } from '../compact/arithmetic.mjs';
+import { isPredictionDeadline } from './deadline.mjs';
 
 const require = createRequire(import.meta.url);
 const textDecoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
@@ -49,27 +51,78 @@ export function createPredictor(shared) {
     256
   );
 
-  function encode(input, { deadline = Infinity } = {}) {
+  function encodeDetailed(input, { deadline = Infinity } = {}) {
     const bytes = validate(input);
     if (bytes.length > 1024) return null;
     budget.expires = Math.min(deadline, performance.now() + 20);
     let best = null;
     try {
+      const body = statistical.encodeBytes(bytes);
       best = {
         codec: 'statistical-v1',
-        payload: 'n' + toBase64(seal(statistical.encodeBytes(bytes), bytes))
+        mode: 0,
+        body,
+        bytes,
+        payload: 'n' + toBase64(seal(body, bytes))
       };
       if (bytes.length <= 256) {
-        const payload = 'o' + toBase64(seal(neural.encodeBytes(bytes), bytes));
+        const neuralBody = neural.encodeBytes(bytes);
+        const payload = 'o' + toBase64(seal(neuralBody, bytes));
         if (payload.length < best.payload.length)
-          best = { codec: 'neural-v1', payload };
+          best = {
+            codec: 'neural-v1',
+            mode: 1,
+            body: neuralBody,
+            bytes,
+            payload
+          };
       }
     } catch (error) {
-      if (error.message !== 'Prediction time budget') throw error;
+      if (!isPredictionDeadline(error)) throw error;
     } finally {
       budget.expires = Infinity;
     }
+    if (best) {
+      const description = describe(best.body);
+      if (!description?.interval)
+        throw new Error('Missing arithmetic interval');
+      best.bitLength = description.terminal.bitLength;
+      best.interval = description.interval;
+    }
     return best;
+  }
+
+  function encode(input, options) {
+    const result = encodeDetailed(input, options);
+    return result && { codec: result.codec, payload: result.payload };
+  }
+
+  function decodeBody(mode, body, { deadline = Infinity } = {}) {
+    if ((mode !== 0 && mode !== 1) || !(body instanceof Uint8Array))
+      throw new Error('Invalid prediction body');
+    budget.expires = deadline;
+    try {
+      const bytes = (mode === 0 ? statistical : neural).decodeBytes(body);
+      const input = textDecoder.decode(bytes);
+      validate(input);
+      return { input, bytes };
+    } finally {
+      budget.expires = Infinity;
+    }
+  }
+
+  function decodeRational(mode, source, { deadline = Infinity } = {}) {
+    if ((mode !== 0 && mode !== 1) || typeof source?.bit !== 'function')
+      throw new Error('Invalid prediction source');
+    budget.expires = deadline;
+    try {
+      const result = (mode === 0 ? statistical : neural).decodeRational(source);
+      const input = textDecoder.decode(result.bytes);
+      validate(input);
+      return { input, ...result };
+    } finally {
+      budget.expires = Infinity;
+    }
   }
 
   function decode(ascii, { deadline = Infinity } = {}) {
@@ -82,20 +135,12 @@ export function createPredictor(shared) {
       throw Error('Invalid prediction frame');
     const frame = fromBase64(ascii.slice(1));
     if (frame.length < 5) throw Error('Truncated prediction frame');
-    let bytes;
-    budget.expires = deadline;
-    try {
-      bytes = (ascii[0] === 'n' ? statistical : neural).decodeBytes(
-        frame.subarray(4)
-      );
-    } finally {
-      budget.expires = Infinity;
-    }
-    verify(frame, bytes);
-    const input = textDecoder.decode(bytes);
-    validate(input);
-    return input;
+    const result = decodeBody(ascii[0] === 'n' ? 0 : 1, frame.subarray(4), {
+      deadline
+    });
+    verify(frame, result.bytes);
+    return result.input;
   }
 
-  return { encode, decode };
+  return { encode, encodeDetailed, decode, decodeBody, decodeRational };
 }

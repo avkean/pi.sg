@@ -1,13 +1,25 @@
 import { Worker } from 'node:worker_threads';
 import { performance } from 'node:perf_hooks';
 import { isNativeFrame } from './native-frame.mjs';
+import { isDense, isDenseWide } from './dense.mjs';
+import { recoverCanonical } from './wide.mjs';
 import { shareContext } from '../codecs/predict/models.mjs';
+import { isMixedInput } from '../codecs/mixed/frame.mjs';
 
 export class RedirectError extends Error {
   constructor(code) {
     super(code);
     this.name = 'RedirectError';
     this.code = code;
+  }
+}
+
+function isWideInput(payload) {
+  try {
+    recoverCanonical(payload);
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -35,16 +47,23 @@ export async function createRedirectPool({
     terminations = new Set();
   const failure = (code) => new RedirectError(code);
 
-  function finish(job, error, decoded) {
+  function settle(job, error, decoded) {
     if (!job || job.settled) return;
     job.settled = true;
+    job.signal?.removeEventListener('abort', job.abort);
+    if (error) job.reject(error);
+    else job.resolve(decoded);
+  }
+
+  function finish(job, error, decoded) {
+    if (!job || job.released) return;
+    job.released = true;
     clearTimeout(job.timer);
     job.signal?.removeEventListener('abort', job.abort);
     const index = queue.indexOf(job);
     if (index !== -1) queue.splice(index, 1);
     if (current?.job === job) current.job = null;
-    if (error) job.reject(error);
-    else job.resolve(decoded);
+    settle(job, error, decoded);
   }
 
   function rejectQueue(error) {
@@ -80,7 +99,14 @@ export async function createRedirectPool({
       }
       slot.job = job;
       try {
-        slot.worker.postMessage({ id: job.id, payload: job.payload });
+        slot.worker.postMessage({
+          id: job.id,
+          payload: job.payload,
+          timeoutMs: Math.min(
+            300,
+            Math.max(1, Math.floor(job.expires - performance.now() - 10))
+          )
+        });
       } catch {
         retire(slot, failure('UNAVAILABLE'), true);
       }
@@ -151,6 +177,8 @@ export async function createRedirectPool({
       }
       if (message.type === 'decoded' && typeof message.decoded === 'string') {
         finish(job, null, message.decoded);
+      } else if (message.type === 'timeout') {
+        finish(job, failure('DEADLINE'));
       } else if (message.type === 'invalid') {
         finish(job, failure('INVALID'));
       } else {
@@ -166,7 +194,12 @@ export async function createRedirectPool({
     if (signal?.aborted) return Promise.reject(failure('ABORTED'));
     if (
       typeof payload !== 'string' ||
-      (!/^[A-Za-z0-9_-]{6,8192}$/.test(payload) && !isNativeFrame(payload))
+      (!/^[A-Za-z0-9_-]{6,8192}$/.test(payload) &&
+        !isDense(payload) &&
+        !isDenseWide(payload) &&
+        !isWideInput(payload) &&
+        !isNativeFrame(payload) &&
+        !isMixedInput(payload))
     ) {
       return Promise.reject(failure('INVALID'));
     }
@@ -181,13 +214,19 @@ export async function createRedirectPool({
         reject,
         signal,
         expires: performance.now() + deadlineMs,
-        settled: false
+        settled: false,
+        released: false
       };
       const cancel = (code) => {
         const active = current?.job === job;
-        finish(job, failure(code));
-        if (active) retire(current, failure(code), true);
-        else dispatch();
+        const error = failure(code);
+        if (active && code === 'ABORTED') {
+          settle(job, error);
+        } else {
+          finish(job, error);
+          if (active) retire(current, error, true);
+          else dispatch();
+        }
       };
       job.timer = setTimeout(() => cancel('DEADLINE'), deadlineMs);
       job.abort = () => cancel('ABORTED');

@@ -12,6 +12,7 @@ import { createPiNext } from '../codecs/compact/pi.mjs';
 import { seal, toBase64 } from '../codecs/core/bytes.mjs';
 import { createRedirectPool } from '../src/redirect-pool.mjs';
 import { serve } from '../server.mjs';
+import { toDense } from '../src/dense.mjs';
 
 const model = await readFile(
   new URL('../models/context-v1.bin', import.meta.url)
@@ -136,11 +137,16 @@ test('the configured public origin works behind HTTPS without trusting forwarded
     const response = await fetch(proxied.origin + '/api/compress', options);
     assert.equal(response.status, 200);
     const result = await response.json();
-    assert.deepEqual(Object.keys(result), ['codec', 'payload']);
-    const decoded = await request('/' + result.payload, {
-      origin: proxied.origin
-    });
-    checkPreview(decoded, options.body);
+    assert.deepEqual(Object.keys(result), [
+      'codec',
+      'asciiPayload',
+      'unicodePayload'
+    ]);
+    for (const payload of [result.asciiPayload, result.unicodePayload]) {
+      const path = new URL('https://pi.sg/' + payload).pathname;
+      const decoded = await request(path, { origin: proxied.origin });
+      checkPreview(decoded, options.body);
+    }
     for (const origin of ['https://other.example', proxied.origin]) {
       const denied = await fetch(proxied.origin + '/api/compress', {
         ...options,
@@ -299,6 +305,14 @@ test('malformed raw paths, queries, corruption and unsupported schemes return th
   const payload = pi.encode('https://github.com/example/project/issues/12345', {
     origin: running.origin
   }).payload;
+  const escaped = (value) =>
+    [...value]
+      .map((character) =>
+        [...new TextEncoder().encode(character)]
+          .map((byte) => '%' + byte.toString(16).padStart(2, '0'))
+          .join('')
+      )
+      .join('');
   const paths = [
     '/abcde',
     '/AAAAAA',
@@ -310,6 +324,8 @@ test('malformed raw paths, queries, corruption and unsupported schemes return th
     '/' + payload + '/',
     '/' + payload + '=',
     '/' + payload + '%41',
+    '/' + escaped(payload),
+    '/' + escaped(toDense(payload)),
     '/' + payload + 'A',
     '/' + payload.slice(0, -2),
     '/' +
@@ -483,6 +499,14 @@ test('all allowlisted assets serve exact bytes, gzip and Brotli with appropriate
         assert.equal(head.headers[field], response.headers[field]);
       }
     }
+  }
+});
+
+test('browser bundles retain the fflate license notice', async () => {
+  for (const file of ['../dist/app.js', '../dist/worker.js']) {
+    const source = await readFile(new URL(file, import.meta.url), 'utf8');
+    assert.match(source, /Copyright \(c\) 2026 Arjun Barrett/);
+    assert.match(source, /Permission is hereby granted/);
   }
 });
 
@@ -693,18 +717,17 @@ test('aborting a queued job frees its queue slot and removes its abort listener'
   }
 });
 
-test('aborting active work replaces the worker and cleans up the deadline/listener', async () => {
+test('aborting active work forgets its result without restarting the worker', async () => {
   const pool = await createRedirectPool({ workerURL: fixtureWorker });
   try {
     const before = JSON.parse(await pool.decode('quick_')).threadId;
     const controller = new AbortController();
-    const pending = pool.decode('hang__', { signal: controller.signal });
+    const pending = pool.decode('slow__', { signal: controller.signal });
     const rejected = assert.rejects(pending, code('ABORTED'));
     controller.abort();
     await rejected;
     assert.equal(getEventListeners(controller.signal, 'abort').length, 0);
-    assert.notEqual(JSON.parse(await pool.decode('quick_')).threadId, before);
-    assert.equal(JSON.parse(await pool.decode('quick_')).threadId > 0, true);
+    assert.equal(JSON.parse(await pool.decode('quick_')).threadId, before);
   } finally {
     await pool.close();
   }

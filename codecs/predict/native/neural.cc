@@ -11,6 +11,16 @@
 
 #include "common.h"
 
+#if defined(PI_NEURAL_FORCE_SCALAR) && defined(PI_NEURAL_FORCE_AVX2)
+#error "Only one neural backend can be forced"
+#endif
+
+#if defined(PI_NEURAL_FORCE_AVX2) &&                                                   \
+    !(defined(__linux__) && defined(__x86_64__) &&                                    \
+      (defined(__GNUC__) || defined(__clang__)))
+#error "The forced AVX2 backend requires Linux x64 with GCC or Clang"
+#endif
+
 namespace pi::predict {
 namespace {
 
@@ -279,7 +289,16 @@ __attribute__((target("avx2"))) void LinearAvx2(const Layer& layer, const int16_
 
 void Linear(const Layer& layer, const int16_t* input, int16_t* output, bool relu) {
   if (layer.narrow) {
-#if defined(__linux__) && defined(__x86_64__) && (defined(__GNUC__) || defined(__clang__))
+#if defined(PI_NEURAL_FORCE_SCALAR)
+    Linear<int32_t>(layer, input, output, relu);
+    return;
+#elif defined(PI_NEURAL_FORCE_AVX2)
+    static const bool avx2 = __builtin_cpu_supports("avx2");
+    if (!avx2) throw Error{"AVX2 is unavailable"};
+    LinearAvx2(layer, input, output, relu);
+    return;
+#elif defined(__linux__) && defined(__x86_64__) && \
+    (defined(__GNUC__) || defined(__clang__))
     static const bool avx2 = __builtin_cpu_supports("avx2");
     if (avx2) {
       LinearAvx2(layer, input, output, relu);
@@ -330,6 +349,7 @@ napi_value Predict(napi_env env, napi_callback_info info) {
 
 napi_value Init(napi_env env, napi_value exports) {
   return Guard(env, [&]() {
+    CheckFloatingPoint();
     auto addon = std::make_unique<Addon>(env);
     napi_value global, buffer, prototype;
     Check(napi_get_global(env, &global));

@@ -7,6 +7,7 @@ COPY build.mjs ./
 COPY src/ src/
 COPY codecs/ codecs/
 COPY models/ models/
+COPY licenses/ licenses/
 RUN npm run build && npm prune --omit=dev
 
 FROM node:26.8.1-bookworm-slim
@@ -19,7 +20,7 @@ COPY codecs/ codecs/
 COPY models/ models/
 COPY public/ public/
 COPY licenses/ licenses/
-COPY server.mjs package.json NOTICE.md ./
+COPY server.mjs package.json LICENSE NOTICE.md ./
 USER node
 EXPOSE 8788
 CMD ["node", "--v8-pool-size=1", "server.mjs"]

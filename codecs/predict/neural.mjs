@@ -1,3 +1,5 @@
+import { checkPredictionDeadline } from './deadline.mjs';
+
 export function createNeuralTails(model, base, budget) {
   const { ppm, probabilities } = base,
     prior = 0.5,
@@ -37,8 +39,7 @@ export function createNeuralTails(model, base, budget) {
   function writeP(coder, bytes, prefix) {
     const state = initial(prefix);
     for (let i = 0; i <= bytes.length; i++) {
-      if (budget && performance.now() > budget.expires)
-        throw Error('Prediction time budget');
+      if (budget) checkPredictionDeadline(budget.expires);
       const s = i === bytes.length ? 256 : bytes[i],
         p = distribution(state);
       coder.write(p.cdf[s], p.cdf[s + 1], p.total);
@@ -49,8 +50,7 @@ export function createNeuralTails(model, base, budget) {
     const state = initial(prefix),
       out = [];
     for (let i = 0; i <= limit; i++) {
-      if (budget && performance.now() > budget.expires)
-        throw Error('Prediction time budget');
+      if (budget) checkPredictionDeadline(budget.expires);
       const p = distribution(state),
         target = coder.target(p.total);
       let lo = 0,

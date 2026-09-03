@@ -1,5 +1,4 @@
-// Isolated static PPM. The larger/pruned table is trained by train-context.mjs.
-// Released model and arithmetic interval rules are reused read-only.
+// Static PPM using the released model and arithmetic interval rules.
 import {
   ArithmeticEncoder,
   ArithmeticDecoder,

@@ -211,6 +211,7 @@ napi_value Predict(napi_env env, napi_callback_info info) {
 
 napi_value Init(napi_env env, napi_value exports) {
   return Guard(env, [&]() {
+    CheckFloatingPoint();
     auto addon = std::make_unique<Addon>(env);
     napi_value global, buffer, prototype;
     Check(napi_get_global(env, &global));

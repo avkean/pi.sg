@@ -1,5 +1,4 @@
-// Experimental P/S-only framing. This namespace has never been deployed.
-// The frozen P/S/D/L markers remain exclusively assigned to Pi v1.
+// The frozen P/S/D/L markers remain assigned to Pi v1.
 export const ALPHABET =
   'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
 export const PREFIXES = [...ALPHABET]

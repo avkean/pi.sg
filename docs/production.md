@@ -5,22 +5,49 @@ Deploy one Pi process behind HTTPS first. Keep the node port private, use the su
 ## Before launch
 
 - Build the container and check that it starts with its read-only filesystem. Check the health endpoint and clean shutdown.
-- Verify the public origin, both alphabets, mandatory previews, and long escaped Unicode paths through the actual proxy. Don't rewrite paths or cache link responses.
+- Deploy the new image once with `PI_PREDICTION_ENCODE=0`. Verify that saved MIXFRAME links open correctly before the server creates any new ones. Then enable MIXFRAME in a second deployment.
+- Verify the public origin, dense ASCII punctuation, long escaped Unicode paths, and mandatory previews through the actual proxy. Don't rewrite paths or cache link responses.
 - Test a burst of requests within the container limits. Check aggregate CPU, memory, latency, 429s, and 503s. Worker heap limits do not include native allocations.
 - Keep proxy and hosting logs free of request paths, bodies, and referrers. Encoded paths still contain the destination.
+- Confirm Bunny access logs and extended logs are off, log forwarding is disabled, and IP anonymisation is on.
 - Tag each release image before replacing it. Keep the previous image for rollback and preserve codec/model files indefinitely.
-- For a compression rollback, set `PI_PREDICTION_ENCODE=0` and recreate the app. This keeps the `n/o` decoders while using the previous encoders. An older image without those decoders would break newly shared links.
+- For a compression rollback, set `PI_PREDICTION_ENCODE=0` and recreate the app. This stops issuing mixed links while keeping their decoder. Keep the decoder-only image as the oldest rollback target because older images cannot open MIXFRAME links.
 
 ## Edge limits
 
 The limits inside Pi protect its workers, but they do not replace limits at the network edge. Set these starting limits with [Bunny Shield rate limiting](https://docs.bunny.net/api-reference/shield/ratelimits/patch-shieldrate-limit):
 
 - `POST /api/compress`: 20 requests per minute per client, with a 60 second block.
-- Encoded link paths: 120 requests per minute per client, with a 60 second block. Exclude the homepage, `/privacy`, static assets, and the model file.
+- Encoded link paths: 120 requests per minute per client, with a 60 second block. Exclude the homepage, `/health`, `/privacy`, static assets, and the model file.
 
 Return `429 Too Many Requests` instead of showing a challenge on shared links. Check aggregate 429 counts and latency, then adjust the limits if normal users are being blocked. Do not forward full request addresses to a logging service because an encoded path contains the destination.
 
-Block direct access to the origin so the edge rules cannot be bypassed. Have Bunny replace a private request header and require that header at the origin proxy. Keep the value outside this repository and rotate it if it leaks. The health endpoint should stay private.
+Block direct access to the origin so the edge rules cannot be bypassed. Have Bunny replace a private request header and require that header at the origin proxy. Keep the value outside this repository and rotate it if it leaks.
+
+`/health` returns only `ok`, so it may stay public for outside uptime checks. Exclude it from encoded-link rate limits. Keep the Node port itself private.
+
+## Compose with an existing proxy
+
+`compose.proxy.yaml` is an override for `compose.yaml`, not a standalone file. Build one image and use that same image for both rollout steps:
+
+```sh
+PI_RELEASE=$(git rev-parse --short=12 HEAD)
+docker build --pull --tag pi-compressor:$PI_RELEASE .
+
+PI_PREDICTION_ENCODE=0 PI_RELEASE=$PI_RELEASE docker compose \
+  -f compose.yaml -f compose.proxy.yaml \
+  up -d --no-build app
+```
+
+Check `/health`, the homepage, and saved MIXFRAME links while encoding is off. If they work, enable the encoder without changing the image:
+
+```sh
+PI_PREDICTION_ENCODE=1 PI_RELEASE=$PI_RELEASE docker compose \
+  -f compose.yaml -f compose.proxy.yaml \
+  up -d --no-build app
+```
+
+Check both link formats, extra compression, and the destination preview. Keep this image as the oldest rollback target after it has issued MIXFRAME links.
 
 ## Continuous integration
 

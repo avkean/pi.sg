@@ -7,7 +7,6 @@ import { pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 import { gzip, brotliCompress, constants } from 'node:zlib';
 import { createRedirectPool } from './src/redirect-pool.mjs';
-import { unwrapPayload } from './src/surface.mjs';
 import { createCompressionPool } from './src/compression-pool.mjs';
 import { createCompressionAPI } from './src/compression-api.mjs';
 
@@ -231,20 +230,23 @@ export async function serve({
         });
       }
     }
-    // Exact static routes were handled above. The only escaped route allowed
-    // here is an entire wide-character payload; escaped ASCII, separators,
-    // queries and filesystem-like paths remain invalid.
     if (typeof raw !== 'string' || raw[0] !== '/' || raw.length > 8193) {
       return invalid(req, res);
     }
-    // The old suffix remains valid but every link now uses the preview screen.
     const marked = raw.endsWith('~');
-    let payload = raw.slice(1, marked ? -1 : undefined);
-    if (!/^[A-Za-z0-9_-]{6,8192}$/.test(payload)) {
+    const encoded = raw.slice(1, marked ? -1 : undefined);
+    if (!encoded || /[/?#\\]/.test(encoded)) return invalid(req, res);
+    let payload = encoded;
+    if (encoded.includes('%')) {
       try {
-        if (!/^(?:%[A-Fa-f0-9]{2})+$/.test(payload)) return invalid(req, res);
-        const wide = decodeURIComponent(payload);
-        payload = unwrapPayload(wide);
+        if (!/^(?:%[A-Fa-f0-9]{2})+$/.test(encoded)) return invalid(req, res);
+        payload = decodeURIComponent(encoded);
+        if (
+          !payload.isWellFormed() ||
+          !/[^\x00-\x7f]/.test(payload) ||
+          /[%/?#\\]/.test(payload)
+        )
+          return invalid(req, res);
       } catch {
         return invalid(req, res);
       }

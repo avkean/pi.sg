@@ -16,12 +16,10 @@ export function loadWords() {
   for (let i = 0; i < words.length; i++)
     cumulative[i + 1] = cumulative[i] + frequencies[i];
   const bytes = readModel('models/predict-v1/bigrams.bin');
-  const data = new Uint32Array(
-      bytes.buffer,
-      bytes.byteOffset,
-      bytes.length / 4
-    ),
-    offsets = new Uint32Array(words.length),
+  if (bytes.length % 4) throw Error('Invalid bigram model length');
+  const data = new Uint32Array(bytes.length / 4);
+  for (let i = 0; i < data.length; i++) data[i] = bytes.readUInt32LE(i * 4);
+  const offsets = new Uint32Array(words.length),
     lengths = new Uint32Array(words.length);
   let at = 1;
   for (let i = 0; i < words.length; i++) {

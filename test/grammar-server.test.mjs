@@ -83,7 +83,7 @@ test('CRC and canonical arithmetic reject mutation, truncation, append, and vers
     'https://unknown-experimental-host.invalid/a?q=ABCdef9012-_&empty=#'
   ];
   for (const input of inputs) {
-    const good = candidate.encode(input, { format: 'ascii' }).payload,
+    const good = candidate.encode(input, { format: 'ascii' }).asciiPayload,
       frame = fromBase64(good.slice(1));
     for (let i = 0; i < frame.length; i++)
       for (const bit of [1, 128]) {

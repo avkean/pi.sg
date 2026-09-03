@@ -10,6 +10,7 @@ import { PREFIXES } from '../codecs/compact/frame.mjs';
 import { seal, toBase64 } from '../codecs/core/bytes.mjs';
 import { encodeStructured } from '../src/structured.mjs';
 import { isNativeFrame } from '../src/native-frame.mjs';
+import { isDense, isDenseWide } from '../src/dense.mjs';
 
 const model = await readFile(
   new URL('../models/context-v1.bin', import.meta.url)
@@ -112,9 +113,16 @@ test('compact and plain links carry identical data and preview through the real 
   for (const input of examples) {
     const compact = pi.encode(input, { origin: running.origin });
     const plain = pi.encode(input, { origin: running.origin, format: 'ascii' });
-    assert.ok(isWide(compact.payload));
+    assert.ok(
+      isWide(compact.payload) ||
+        isDenseWide(compact.payload) ||
+        isNativeFrame(compact.payload)
+    );
     assert.equal(compact.transport, 'compact');
     assert.equal(plain.transport, 'ascii');
+    assert.ok(
+      isDense(plain.payload) || /^[A-Za-z0-9_-]{6,8192}$/.test(plain.payload)
+    );
     assert.equal(pi.decode(compact.asciiPayload), input);
     assert.ok(compact.payload.length < plain.payload.length);
     assert.equal(pi.decode(compact.payload), input);

@@ -9,9 +9,16 @@ const workerURL = new URL(
     encodeURIComponent(`
  import {parentPort,threadId} from 'node:worker_threads';
  parentPort.on('message',({id,input})=>{
-  if(input==='https://hang.example/')Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0);
+ if(input==='https://hang.example/')Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0);
   if(input==='https://crash.example/')process.exit(1);
-  parentPort.postMessage({id,type:'encoded',candidates:[{codec:String(threadId),payload:'DAAAAAAA'}]});
+  if(input==='https://fail.example/'){
+   parentPort.postMessage({id,type:'failed'});
+   return;
+  }
+  const candidate=input==='https://direct.example/'
+   ?{codec:'mixed-v1',asciiPayload:'!Ep:PZ',unicodePayload:'垮캯'}
+   :{codec:String(threadId),payload:'DAAAAAAA'};
+  parentPort.postMessage({id,type:'encoded',candidates:[candidate]});
  });
  parentPort.postMessage({type:'ready'});
 `)
@@ -22,6 +29,18 @@ test('extra compression has a hard deadline and four queued jobs; a stopped work
   const pool = await createCompressionPool({ workerURL });
   try {
     const before = await pool.encode('https://example.com/');
+    await assert.rejects(
+      pool.encode('https://fail.example/'),
+      code('UNAVAILABLE')
+    );
+    assert.notEqual(
+      (await pool.encode('https://example.com/'))[0].codec,
+      before[0].codec
+    );
+    assert.equal(
+      (await pool.encode('https://direct.example/'))[0].unicodePayload,
+      '垮캯'
+    );
     const jobs = Promise.allSettled([
       pool.encode('https://hang.example/'),
       ...Array.from({ length: 4 }, () => pool.encode('https://example.com/'))
@@ -83,6 +102,22 @@ test('client extra pass uses same-origin POST without cookies and renders the se
   assert.equal(calls, 1);
 });
 
+test('client accepts validated mixed Unicode and ASCII results', async () => {
+  const origin = 'http://127.0.0.1:8788';
+  const fixture = {
+    codec: 'mixed-v1',
+    asciiPayload: '!Ep:PZ',
+    unicodePayload: '垮캯'
+  };
+  const result = await enhance('https://example.com/', {
+    origin,
+    fetchImpl: async () => Response.json(fixture)
+  });
+  assert.equal(result.payload, fixture.unicodePayload);
+  assert.equal(result.asciiPayload, fixture.asciiPayload);
+  assert.equal(result.transport, 'direct');
+});
+
 test('client extra pass fails quietly on errors, huge bodies, bad frames and oversized inputs', async () => {
   const origin = 'http://127.0.0.1:8788',
     input = 'https://example.com/';
@@ -94,7 +129,27 @@ test('client extra pass fails quietly on errors, huge bodies, bad frames and ove
       headers: { 'Content-Type': 'application/json' }
     }),
     Response.json({ codec: 'bad', payload: '../../evil' }),
-    Response.json({ codec: 'bad', payload: 'https://evil.example/' })
+    Response.json({ codec: 'bad', payload: 'https://evil.example/' }),
+    Response.json({
+      codec: 'bad',
+      payload: 'DAAAAAAA',
+      unicodePayload: '垮캯'
+    }),
+    Response.json({
+      codec: 'predict-v2',
+      payload: 'DAAAAAAA',
+      unicodePayload: '🙂🙂🙂'
+    }),
+    Response.json({
+      codec: 'mixed-v1',
+      payload: 'DAAAAAAA',
+      unicodePayload: '垮캯'
+    }),
+    Response.json({
+      codec: 'mixed-v1',
+      asciiPayload: '!Ep:PZ',
+      unicodePayload: '🙂🙂🙂'
+    })
   ])
     assert.equal(
       await enhance(input, { origin, fetchImpl: async () => response }),

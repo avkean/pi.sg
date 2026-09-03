@@ -24,3 +24,7 @@ jobs:
         run: npm run check
       - name: Run tests
         run: npm test
+      - name: Check scalar mixed codec
+        run: |
+          PI_NEURAL_BACKEND=scalar npm run build
+          node --test test/mixed-frame.test.mjs test/server-compressor.test.mjs

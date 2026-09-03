@@ -59,14 +59,17 @@ export async function enhance(
     if (
       typeof result.codec !== 'string' ||
       result.codec.length > 64 ||
-      typeof result.payload !== 'string'
+      (result.codec === 'mixed-v1'
+        ? typeof result.asciiPayload !== 'string' ||
+          typeof result.unicodePayload !== 'string' ||
+          result.payload !== undefined
+        : typeof result.payload !== 'string' ||
+          result.asciiPayload !== undefined ||
+          result.unicodePayload !== undefined)
     )
       return null;
     return {
-      ...renderResult(
-        { codec: result.codec, payload: result.payload },
-        { origin, format }
-      ),
+      ...renderResult(result, { origin, format }),
       enhanced: true
     };
   } catch {

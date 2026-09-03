@@ -7,10 +7,13 @@ const HALF = 0x80000000,
 const metadata = new WeakMap();
 export const describe = (bytes) => metadata.get(bytes);
 export class ArithmeticDecoder {
-  constructor(bytes) {
-    if (!(bytes instanceof Uint8Array) || bytes.length > 6144)
+  constructor(input) {
+    const bytes = input instanceof Uint8Array ? input : null;
+    const source = bytes ? null : input;
+    if (bytes ? bytes.length > 6144 : typeof source?.bit !== 'function')
       throw new RangeError('Arithmetic input limit');
     this.bytes = bytes;
+    this.source = source;
     this.position = 0;
     this.low = 0;
     this.high = 0xffffffff;
@@ -23,6 +26,12 @@ export class ArithmeticDecoder {
     // Bound total work, not the zero extension relative to transmitted length.
     if (this.position >= 65568) throw new RangeError('Arithmetic read limit');
     const i = this.position++;
+    if (this.source) {
+      const value = this.source.bit();
+      if (value !== 0 && value !== 1)
+        throw new Error('Invalid arithmetic bit source');
+      return value;
+    }
     return i >= this.bytes.length * 8
       ? 0
       : (this.bytes[i >>> 3] >>> (7 - (i & 7))) & 1;
@@ -65,13 +74,26 @@ export class ArithmeticDecoder {
   }
 }
 export class ArithmeticEncoder {
-  constructor() {
+  constructor(captureTrace = false) {
     this.low = 0;
     this.high = 0xffffffff;
     this.pending = 0;
     this.output = [];
     this.symbols = 0;
     this.shifts = 0;
+    this.trace = captureTrace ? [] : null;
+    this.source = null;
+  }
+  bind(bytes) {
+    if (
+      !(bytes instanceof Uint8Array) ||
+      this.symbols !== 0 ||
+      this.source !== null
+    )
+      throw new Error('Invalid arithmetic source binding');
+    let source = '';
+    for (const byte of bytes) source += String.fromCharCode(byte);
+    this.source = source;
   }
   emit(value) {
     this.output.push(value);
@@ -94,6 +116,7 @@ export class ArithmeticEncoder {
       total > 65536
     )
       throw new Error('Invalid frequency');
+    this.trace?.push(lo, hi, total);
     if (++this.symbols > 32768) throw new RangeError('Arithmetic symbol limit');
     const range = this.high - this.low + 1;
     this.high = this.low + Math.floor((range * hi) / total) - 1;
@@ -119,6 +142,7 @@ export class ArithmeticEncoder {
     // Bounds are capped above; BigInt work is confined to this finalizer.
     // All emitted prefix bits are fixed. Search only the deferred interval,
     // avoiding a whole-message BigInt and its quadratic accumulation cost.
+    const prefix = this.output.slice();
     const tailWidth = this.pending + 32;
     const offset = ((1n << BigInt(this.pending)) - 1n) << 31n;
     const lower = offset + BigInt(this.low);
@@ -135,21 +159,34 @@ export class ArithmeticEncoder {
       if (point(mid).valid) hi = mid;
       else lo = mid + 1;
     }
-    const terminalBits = this.output.concat(
+    const terminalBits = prefix.concat(
       lo === 0 ? [] : [...point(lo).q.toString(2).padStart(lo, '0')].map(Number)
     );
     while (terminalBits.at(-1) === 0) terminalBits.pop();
+    const interval = {
+      prefix: Uint8Array.from(prefix),
+      tailWidth,
+      lower,
+      upper,
+      terminalBitLength: terminalBits.length
+    };
     this.pending++;
     this.emit(this.low < QUARTER ? 0 : 1);
     const standardBits = this.output.slice(),
-      bytes = bitsToBytes(standardBits);
-    metadata.set(bytes, {
-      standard: { bytes, bitLength: standardBits.length },
-      terminal: {
-        bytes: bitsToBytes(terminalBits),
-        bitLength: terminalBits.length
-      }
-    });
+      bytes = bitsToBytes(standardBits),
+      terminalBytes = bitsToBytes(terminalBits),
+      description = {
+        standard: { bytes, bitLength: standardBits.length },
+        terminal: {
+          bytes: terminalBytes,
+          bitLength: terminalBits.length
+        },
+        interval,
+        trace: this.trace && Uint32Array.from(this.trace),
+        source: this.source
+      };
+    metadata.set(bytes, description);
+    metadata.set(terminalBytes, description);
     return bytes;
   }
 }

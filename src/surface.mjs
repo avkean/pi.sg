@@ -1,7 +1,19 @@
 import { MAX_LINK_CHARS } from '../codecs/core/core.mjs';
-import { toWide, fromWide } from './wide.mjs';
+import { fromWide } from './wide.mjs';
 import { isNativeFrame, toNativeFrame } from './native-frame.mjs';
 import { fromBase64 } from '../codecs/core/bytes.mjs';
+import {
+  fromDense,
+  fromDenseWide,
+  isDense,
+  isDenseWide,
+  toDense,
+  toDenseWide
+} from './dense.mjs';
+import {
+  isAsciiMixedPayload,
+  isUnicodeMixedPayload
+} from '../codecs/mixed/frame.mjs';
 
 // A display alphabet is a transport choice, separate from the compressor.
 // Both forms carry the same versioned, checksummed payload.
@@ -16,39 +28,62 @@ export function renderResult(
     throw Error('Unknown link format');
   if (format === 'ascii' && result.asciiAlternative)
     result = { ...result, ...result.asciiAlternative };
-  const asciiPayload =
-    isNativeFrame(result.payload) && typeof result.asciiPayload === 'string'
+  const mixed = result.codec === 'mixed-v1';
+  const asciiPayload = mixed
+    ? result.asciiPayload
+    : isNativeFrame(result.payload) && typeof result.asciiPayload === 'string'
       ? result.asciiPayload
       : unwrapPayload(result.payload);
   if (typeof asciiPayload === 'string' && asciiPayload.length > MAX_LINK_CHARS)
     throw new RangeError('Compressed link exceeds the 8,192-character limit.');
   if (
     typeof asciiPayload !== 'string' ||
-    !/^[A-Za-z0-9_-]{6,8192}$/.test(asciiPayload)
+    (mixed
+      ? !isAsciiMixedPayload(asciiPayload)
+      : !/^[A-Za-z0-9_-]{6,8192}$/.test(asciiPayload))
   )
     throw Error('Invalid encoded payload');
-  const plain = base.origin + '/' + asciiPayload;
+  const ascii = mixed ? asciiPayload : toDense(asciiPayload);
+  const plain = base.origin + '/' + ascii;
   if (plain.length > MAX_LINK_CHARS)
     throw new RangeError('Compressed link exceeds the 8,192-character limit.');
-  let payload = asciiPayload,
+  let payload = ascii,
     transport = 'ascii';
-  if (format === 'compact') {
-    const wide =
+  if (format === 'compact' && !mixed) {
+    const wide = toDenseWide(asciiPayload);
+    const oldWide =
       asciiPayload[0] === 'x' && Number.isInteger(result.frameBitLength)
         ? toNativeFrame(
             fromBase64(asciiPayload.slice(1)),
             result.frameBitLength
           )
-        : toWide(asciiPayload);
-    const wideUrl = base.origin + '/' + wide;
-    // Count the actual escaped URL too: a small-looking link must still fit
-    // the request limits used by the redirect server.
+        : wide;
+    for (const candidate of [oldWide, wide]) {
+      const wideUrl = base.origin + '/' + candidate;
+      if (
+        candidate.length < payload.length &&
+        new URL(wideUrl).href.length <= MAX_LINK_CHARS
+      ) {
+        payload = candidate;
+        transport = 'compact';
+      }
+    }
+  }
+  if (format === 'compact' && mixed) {
+    if (!isUnicodeMixedPayload(result.unicodePayload))
+      throw Error('Invalid mixed Unicode payload');
+    const directUrl = new URL(base.origin + '/' + result.unicodePayload);
     if (
-      wide.length < asciiPayload.length &&
-      new URL(wideUrl).href.length <= MAX_LINK_CHARS
-    ) {
-      payload = wide;
-      transport = 'compact';
+      directUrl.origin !== base.origin ||
+      directUrl.search ||
+      directUrl.hash ||
+      directUrl.href.length > MAX_LINK_CHARS ||
+      decodeURIComponent(directUrl.pathname.slice(1)) !== result.unicodePayload
+    )
+      throw Error('Invalid mixed Unicode URL');
+    if (result.unicodePayload.length < payload.length) {
+      payload = result.unicodePayload;
+      transport = 'direct';
     }
   }
   return {
@@ -72,7 +107,8 @@ export function unwrapPayload(payload) {
       throw Error('Escaped ASCII payloads are not supported');
   }
   if (isNativeFrame(payload)) return payload;
-  return typeof payload === 'string' && /[^\x00-\x7f]/.test(payload)
-    ? fromWide(payload)
-    : payload;
+  if (isDenseWide(payload)) return fromDenseWide(payload);
+  if (typeof payload === 'string' && /[^\x00-\x7f]/.test(payload))
+    return fromWide(payload);
+  return isDense(payload) ? fromDense(payload) : payload;
 }
