@@ -233,6 +233,8 @@ export function createCompressor(
   function warmup({ decoder = false } = {}) {
     if (decoder) {
       getBrowser();
+      // Loading the legacy models can exceed a request's deadline.
+      getPredictor();
       getMixed();
       verifyMixedModel({ decoderOnly: true });
       return;

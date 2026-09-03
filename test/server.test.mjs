@@ -12,7 +12,7 @@ import { createPiNext } from '../codecs/compact/pi.mjs';
 import { seal, toBase64 } from '../codecs/core/bytes.mjs';
 import { createRedirectPool } from '../src/redirect-pool.mjs';
 import { serve } from '../server.mjs';
-import { toDense } from '../src/dense.mjs';
+import { toDense, toDenseWide } from '../src/dense.mjs';
 
 const model = await readFile(
   new URL('../models/context-v1.bin', import.meta.url)
@@ -122,6 +122,19 @@ function checkPreview(response, input) {
   assert.equal(previewDestination(response), new URL(input).href);
   checkSecurity(response);
 }
+
+test('saved prediction links open immediately after startup', async () => {
+  const fixtures = JSON.parse(
+    await readFile(new URL('./fixtures/predict-links.json', import.meta.url))
+  );
+  for (const { input, frames } of fixtures.slice(0, 3))
+    for (const frame of frames)
+      for (const payload of [frame, toDense(frame), toDenseWide(frame)]) {
+        const path = new URL(running.origin + '/' + payload).pathname;
+        const response = await request(path);
+        checkPreview(response, input);
+      }
+});
 
 test('the configured public origin works behind HTTPS without trusting forwarded headers', async () => {
   const proxied = await serve({ port: 0, publicOrigin: 'https://pi.sg/' });
