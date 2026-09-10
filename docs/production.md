@@ -63,9 +63,9 @@ Start without a CAPTCHA. If `/api/compress` is measurably abused after edge limi
 
 ## Brand assets
 
-`public/avkean_dark.svg` and `public/avkean_light.svg` are the outlined Avkean
-wordmarks from the production logo pack. The names refer to the lettering colour.
-Use the wordmark without SYSTEMS for these compact placements, preserve its aspect
-ratio, and keep it at least 120 CSS pixels wide. Update the asset version in all
-four HTML pages and its exact routes in `server.mjs` when replacing the artwork
-so cached copies refresh.
+`public/avkean_dark.svg` and `public/avkean_light.svg` are the full Avkean Systems
+logos from the production pack. Names refer to lettering colour. All four pages
+link the logo to `https://avkean.com/`. Preserve its aspect ratio and display it
+at 320 CSS pixels where space allows. The homepage footer wraps on small screens.
+Update the asset version in all four HTML pages and its exact routes in
+`server.mjs` when replacing the artwork so cached copies refresh.

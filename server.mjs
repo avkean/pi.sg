@@ -31,10 +31,10 @@ const routes = new Map([
   ['/avkean_light.svg', ['public/avkean_light.svg', 'image/svg+xml']],
   ['/avkean_dark.svg', ['public/avkean_dark.svg', 'image/svg+xml']],
   [
-    '/avkean_light.svg?v=20260909',
+    '/avkean_light.svg?v=20260910',
     ['public/avkean_light.svg', 'image/svg+xml']
   ],
-  ['/avkean_dark.svg?v=20260909', ['public/avkean_dark.svg', 'image/svg+xml']],
+  ['/avkean_dark.svg?v=20260910', ['public/avkean_dark.svg', 'image/svg+xml']],
   [
     '/models/context-v1.bin',
     ['./models/context-v1.bin', 'application/octet-stream']
