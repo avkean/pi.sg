@@ -65,7 +65,7 @@ Start without a CAPTCHA. If `/api/compress` is measurably abused after edge limi
 
 `public/avkean_dark.svg` and `public/avkean_light.svg` are the full Avkean Systems
 logos from the production pack. Names refer to lettering colour. All four pages
-link the logo to `https://avkean.com/`. Preserve its aspect ratio and display it
-at 320 CSS pixels where space allows. The homepage footer wraps on small screens.
+link the logo to `https://avkean.com/`. Preserve its aspect ratio. Footer logos are 192 CSS pixels wide; preview and
+error-page logos are 224 pixels wide. The homepage footer wraps when needed.
 Update the asset version in all four HTML pages and its exact routes in
 `server.mjs` when replacing the artwork so cached copies refresh.
