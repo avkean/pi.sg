@@ -67,4 +67,5 @@ Start without a CAPTCHA. If `/api/compress` is measurably abused after edge limi
 wordmarks from the production logo pack. The names refer to the lettering colour.
 Use the wordmark without SYSTEMS for these compact placements, preserve its aspect
 ratio, and keep it at least 120 CSS pixels wide. Update the asset version in all
-four HTML pages when replacing the artwork so cached copies refresh.
+four HTML pages and its exact routes in `server.mjs` when replacing the artwork
+so cached copies refresh.
