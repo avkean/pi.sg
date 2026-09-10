@@ -60,3 +60,11 @@ Use one outside check against a saved Pi link that points to `https://example.co
 ## Bot protection
 
 Start without a CAPTCHA. If `/api/compress` is measurably abused after edge limits are active, protect that endpoint with ALTCHA. Never put a challenge in front of shared links.
+
+## Brand assets
+
+`public/avkean_dark.svg` and `public/avkean_light.svg` are the outlined Avkean
+wordmarks from the production logo pack. The names refer to the lettering colour.
+Use the wordmark without SYSTEMS for these compact placements, preserve its aspect
+ratio, and keep it at least 120 CSS pixels wide. Update the asset version in all
+four HTML pages when replacing the artwork so cached copies refresh.
